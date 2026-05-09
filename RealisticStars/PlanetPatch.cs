@@ -16,6 +16,7 @@ namespace RealisticStars
         public GameObject sprite;
         public float semiMajor;
         public float meanMotion;
+        public float inc;
         public float tau;
         public float absBright;
         public int type;
@@ -45,79 +46,86 @@ namespace RealisticStars
 
             PlanetPatch.planet1.semiMajor = 0.338f;
             PlanetPatch.planet1.meanMotion = 31.974570618f;
+            PlanetPatch.planet1.inc = 4.6775f;
             PlanetPatch.planet1.tau = 0.12413f;
             PlanetPatch.planet1.absBright = -0.5497f;
             PlanetPatch.planet1.type = 1;
             PlanetPatch.planet1.pos = Vector2.zero;
             PlanetPatch.planet1.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet1.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet1.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Bright.tif", PlanetPatch.planet1.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Glare.tif", PlanetPatch.planet1.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet1.sprite.name = "Planet 1";
 
             PlanetPatch.planet2.semiMajor = 0.691f;
             PlanetPatch.planet2.meanMotion = 10.9386241548f;
+            PlanetPatch.planet2.inc = 1.0888f;
             PlanetPatch.planet2.tau = 0.21625f;
             PlanetPatch.planet2.absBright = -3.02521f;
             PlanetPatch.planet2.type = 2;
             PlanetPatch.planet2.pos = Vector2.zero;
             PlanetPatch.planet2.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet2.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet2.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Bright.tif", PlanetPatch.planet2.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Glare.tif", PlanetPatch.planet2.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet2.sprite.name = "Planet 2";
 
             PlanetPatch.planet3.semiMajor = 1.923f;
             PlanetPatch.planet3.meanMotion = 2.35619291187f;
+            PlanetPatch.planet3.inc = 1.3001f;
             PlanetPatch.planet3.tau = 1.62493f;
             PlanetPatch.planet3.absBright = -2.8434f;
             PlanetPatch.planet3.type = 2;
             PlanetPatch.planet3.pos = Vector2.zero;
             PlanetPatch.planet3.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet3.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet3.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/OrangeBright.tif", PlanetPatch.planet3.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/OrangeGlare.tif", PlanetPatch.planet3.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet3.sprite.name = "Planet 3";
 
             PlanetPatch.planet4.semiMajor = 3.162f;
             PlanetPatch.planet4.meanMotion = 1.1174728314f;
+            PlanetPatch.planet4.inc = 9.758998f;
             PlanetPatch.planet4.tau = 0.12822f;
             PlanetPatch.planet4.absBright = 0.87155f;
             PlanetPatch.planet4.type = 1;
             PlanetPatch.planet4.pos = Vector2.zero;
             PlanetPatch.planet4.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet4.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet4.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Bright.tif", PlanetPatch.planet4.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Glare.tif", PlanetPatch.planet4.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet4.sprite.name = "Planet 4";
 
             PlanetPatch.planet5.semiMajor = 5.265f;
             PlanetPatch.planet5.meanMotion = 0.520094436661f;
+            PlanetPatch.planet5.inc = 1.2338f;
             PlanetPatch.planet5.tau = 9.81109f;
             PlanetPatch.planet5.absBright = -10.13936f;
             PlanetPatch.planet5.type = 3;
             PlanetPatch.planet5.pos = Vector2.zero;
             PlanetPatch.planet5.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet5.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet5.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/BlueBright.tif", PlanetPatch.planet5.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/BlueGlare.tif", PlanetPatch.planet5.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet5.sprite.name = "Planet 5";
 
             PlanetPatch.planet6.semiMajor = 10.698f;
             PlanetPatch.planet6.meanMotion = 0.179566732971f;
+            PlanetPatch.planet6.inc = 1.6847f;
             PlanetPatch.planet6.tau = 23.8827f;
             PlanetPatch.planet6.absBright = -9.28114f;
             PlanetPatch.planet6.type = 3;
             PlanetPatch.planet6.pos = Vector2.zero;
             PlanetPatch.planet6.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet6.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet6.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Bright.tif", PlanetPatch.planet6.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Glare.tif", PlanetPatch.planet6.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet6.sprite.name = "Planet 6";
 
             PlanetPatch.planet7.semiMajor = 17.223f;
             PlanetPatch.planet7.meanMotion = 0.0879056053822f;
+            PlanetPatch.planet7.inc = 0.7831f;
             PlanetPatch.planet7.tau = 12.896f;
             PlanetPatch.planet7.absBright = -7.3065f;
             PlanetPatch.planet7.type = 3;
             PlanetPatch.planet7.pos = Vector2.zero;
             PlanetPatch.planet7.sprite = UnityEngine.Object.Instantiate<GameObject>(PlanetPatch.planetSprite, Patches.SunP.transform);
-            MatSetup.SetMat("Assets/Texture2D/Bright.tif", PlanetPatch.planet7.sprite);
-            MatSetup.SetMat("Assets/Texture2D/Glare.tif", PlanetPatch.planet7.sprite.transform.GetChild(0).gameObject);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Bright.tif", PlanetPatch.planet7.sprite);
+            MatSetup.SetMat("Assets/Texture2D/PlanetTex/Glare.tif", PlanetPatch.planet7.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet7.sprite.name = "Planet 7";
         }
 
@@ -185,7 +193,7 @@ namespace RealisticStars
             float Q = 0;
             if (planetstruct.type == 1)
             {
-                Q = 0.72f * Mathf.Exp(-3.332f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 0.631f)) + 0.28f * Mathf.Exp(-1.862f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 1.218f));
+                Q = -2.5f * Mathf.Log(0.72f * Mathf.Exp(-3.332f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 0.631f)) + 0.28f * Mathf.Exp(-1.862f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 1.218f)), 10.0f);
             }
             else if (planetstruct.type == 2)
             {
@@ -197,7 +205,7 @@ namespace RealisticStars
             }
 
             float RD = D.magnitude * planetstruct.pos.magnitude;
-            float apparent = planetstruct.absBright + 5 * Mathf.Log(RD, 10) + Q;
+            float apparent = planetstruct.absBright + 5 * Mathf.Log(RD, 10.0f) + Q;
 
             GameObject glareobj = planetstruct.sprite.transform.GetChild(0).gameObject;
 

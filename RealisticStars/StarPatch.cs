@@ -54,7 +54,7 @@ namespace RealisticStars
 
             if (Plugin.configZodiacToggle.Value)
             {
-                MatSetup.SetAlpha(Patches.lerp * Patches.lerp * StarPatch.scale, MoonPatch.Zodiac);
+                MatSetup.SetAlpha(Patches.lerp * StarPatch.scale * 0.05f, MoonPatch.Zodiac);
             }
 
         }

@@ -46,12 +46,12 @@ namespace RealisticStars
             configZodiacToggle = Config.Bind("Stars",
                                          "Zodiacal Light",
                                          true,
-                                         "Whether the Zodiacal light is visible. \nStill WIP, needs a new texture");
+                                         "Whether the Zodiacal light is visible.");
 
             configPlanetsToggle = Config.Bind("Planets",
                                          "Planets",
                                          true,
-                                         "Whether the planets are visible. \nStill WIP, needs some variation/color");
+                                         "Whether the planets are visible.");
 
         }
         
@@ -59,7 +59,7 @@ namespace RealisticStars
 
         public const string PLUGIN_NAME = "RealisticSkies";
 
-        public const string PLUGIN_VERSION = "1.3.0";
+        public const string PLUGIN_VERSION = "1.3.1";
 
         internal static ConfigEntry<string> configStarType;
 
