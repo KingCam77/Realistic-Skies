@@ -17,6 +17,7 @@ namespace RealisticStars
         public float semiMajor;
         public float meanMotion;
         public float inc;
+        public float RAAN;
         public float tau;
         public float absBright;
         public int type;
@@ -44,10 +45,12 @@ namespace RealisticStars
             PlanetPatch.planetHome.tau = 0.2281f;
             PlanetPatch.planetHome.pos = Vector2.zero;
 
+
             PlanetPatch.planet1.semiMajor = 0.338f;
             PlanetPatch.planet1.meanMotion = 31.974570618f;
             PlanetPatch.planet1.inc = 4.6775f;
             PlanetPatch.planet1.tau = 0.12413f;
+            PlanetPatch.planet1.RAAN = -154.3594f;
             PlanetPatch.planet1.absBright = -0.5497f;
             PlanetPatch.planet1.type = 1;
             PlanetPatch.planet1.pos = Vector2.zero;
@@ -60,6 +63,7 @@ namespace RealisticStars
             PlanetPatch.planet2.meanMotion = 10.9386241548f;
             PlanetPatch.planet2.inc = 1.0888f;
             PlanetPatch.planet2.tau = 0.21625f;
+            PlanetPatch.planet2.RAAN = -166.6269f;
             PlanetPatch.planet2.absBright = -3.02521f;
             PlanetPatch.planet2.type = 2;
             PlanetPatch.planet2.pos = Vector2.zero;
@@ -72,6 +76,7 @@ namespace RealisticStars
             PlanetPatch.planet3.meanMotion = 2.35619291187f;
             PlanetPatch.planet3.inc = 1.3001f;
             PlanetPatch.planet3.tau = 1.62493f;
+            PlanetPatch.planet3.RAAN = 32.9165f;
             PlanetPatch.planet3.absBright = -2.8434f;
             PlanetPatch.planet3.type = 2;
             PlanetPatch.planet3.pos = Vector2.zero;
@@ -80,10 +85,11 @@ namespace RealisticStars
             MatSetup.SetMat("Assets/Texture2D/PlanetTex/OrangeGlare.tif", PlanetPatch.planet3.sprite.transform.GetChild(0).gameObject);
             PlanetPatch.planet3.sprite.name = "Planet 3";
 
-            PlanetPatch.planet4.semiMajor = 3.162f;
+            PlanetPatch.planet4.semiMajor = 3.161f;
             PlanetPatch.planet4.meanMotion = 1.1174728314f;
-            PlanetPatch.planet4.inc = 9.758998f;
-            PlanetPatch.planet4.tau = 0.12822f;
+            PlanetPatch.planet4.inc = 0.963327f;
+            PlanetPatch.planet4.tau = 2.095984f;
+            PlanetPatch.planet4.RAAN = 67.46665f;
             PlanetPatch.planet4.absBright = 0.87155f;
             PlanetPatch.planet4.type = 1;
             PlanetPatch.planet4.pos = Vector2.zero;
@@ -96,6 +102,7 @@ namespace RealisticStars
             PlanetPatch.planet5.meanMotion = 0.520094436661f;
             PlanetPatch.planet5.inc = 1.2338f;
             PlanetPatch.planet5.tau = 9.81109f;
+            PlanetPatch.planet5.RAAN = 8.2104f;
             PlanetPatch.planet5.absBright = -10.13936f;
             PlanetPatch.planet5.type = 3;
             PlanetPatch.planet5.pos = Vector2.zero;
@@ -108,6 +115,7 @@ namespace RealisticStars
             PlanetPatch.planet6.meanMotion = 0.179566732971f;
             PlanetPatch.planet6.inc = 1.6847f;
             PlanetPatch.planet6.tau = 23.8827f;
+            PlanetPatch.planet6.RAAN = -17.7985f;
             PlanetPatch.planet6.absBright = -9.28114f;
             PlanetPatch.planet6.type = 3;
             PlanetPatch.planet6.pos = Vector2.zero;
@@ -120,6 +128,7 @@ namespace RealisticStars
             PlanetPatch.planet7.meanMotion = 0.0879056053822f;
             PlanetPatch.planet7.inc = 0.7831f;
             PlanetPatch.planet7.tau = 12.896f;
+            PlanetPatch.planet7.RAAN = -18.5291f;
             PlanetPatch.planet7.absBright = -7.3065f;
             PlanetPatch.planet7.type = 3;
             PlanetPatch.planet7.pos = Vector2.zero;
@@ -181,11 +190,15 @@ namespace RealisticStars
 
             Vector2 D = PlanetPatch.planetHome.pos - planetstruct.pos;
             float E = Vector2.SignedAngle(D, PlanetPatch.planetHome.pos);
+            float I = planetstruct.inc * Mathf.Sin(Anom + planetstruct.RAAN * Mathf.Deg2Rad);
+            float alt = planetstruct.semiMajor * Mathf.Sin(I * Mathf.Deg2Rad);
+            float Dec = Mathf.Atan(alt / D.magnitude);
 
-            float zd = -6500 * Mathf.Cos(E * Mathf.Deg2Rad);
-            float yd = -6500 * Mathf.Sin(E * Mathf.Deg2Rad);
+            float zd = -6500 * Mathf.Cos(E * Mathf.Deg2Rad) * Mathf.Cos(Dec);
+            float yd = -6500 * Mathf.Sin(E * Mathf.Deg2Rad) * Mathf.Cos(Dec);
+            float xd = -6500 * Mathf.Sin(Dec);
 
-            planetstruct.sprite.transform.localPosition = new Vector3(0.0f, yd, zd);
+            planetstruct.sprite.transform.localPosition = new Vector3(xd, yd, zd);
             planetstruct.sprite.transform.LookAt(StarPatch.Skybox.transform.position);
 
             float P = Vector2.Angle(-planetstruct.pos, D);

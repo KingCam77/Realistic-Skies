@@ -41,6 +41,7 @@ namespace RealisticStars
 
                 MoonPatch.StartMoonPatch();
                 StarPatch.StartStarPatch();
+                //ItemPatch.StartItemPatch();
 
                 if (Plugin.configPlanetsToggle.Value)
                 {
@@ -55,8 +56,8 @@ namespace RealisticStars
                 Patches.lerp = ___lerp;
 
                 int day = GameState.day;
-                float time = ___sunTime.globalTime;
-                float dayAct = (float)day + time / 24;
+                Patches.time = ___sunTime.globalTime;
+                float dayAct = (float)day + Patches.time / 24;
 
                 Patches.year = dayAct / Patches.yearLen;
 
@@ -71,6 +72,8 @@ namespace RealisticStars
         }
 
         public static float yearLen;
+
+        public static float time;
 
         public static float year;
 
