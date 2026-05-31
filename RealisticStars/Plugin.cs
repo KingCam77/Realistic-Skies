@@ -7,7 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 
 
-namespace RealisticStars
+namespace RealisticSkies
 {
     [BepInPlugin(Plugin.PLUGIN_ID, Plugin.PLUGIN_NAME, Plugin.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
@@ -25,7 +25,7 @@ namespace RealisticStars
 
             configYearLen = Config.Bind("General",
                                          "Year Length",
-                                         92f,
+                                         92,
                                          "How many days a year takes.");
 
             configSiderialToggle = Config.Bind("Stars",
@@ -53,17 +53,24 @@ namespace RealisticStars
                                          true,
                                          "Whether the planets are visible.");
 
+            configQuintantHelp = Config.Bind("General",      // The section under which the option is shown
+                                         "Quintant Help",  // The key of the configuration option in the configuration file
+                                         "Arc", // The default value
+                                         "How much of the readings from the quintant should be displayed as text: None, Arc, Sec, Full."); // Description of the option to show in the config file
+
         }
         
         public const string PLUGIN_ID = "com.kingcam16.realisticskies";
 
         public const string PLUGIN_NAME = "RealisticSkies";
 
-        public const string PLUGIN_VERSION = "1.4.0";
+        public const string PLUGIN_VERSION = "2.0.0";
 
         internal static ConfigEntry<string> configStarType;
 
-        internal static ConfigEntry<float> configYearLen;
+        internal static ConfigEntry<string> configQuintantHelp;
+
+        internal static ConfigEntry<int> configYearLen;
 
         internal static ConfigEntry<bool> configSiderialToggle;
 

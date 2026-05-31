@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>RealisticStars</AssemblyName>
+    <AssemblyName>RealisticSkies</AssemblyName>
     <Product>RealisticSkies</Product>
     <Version>1.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>RealisticStars</RootNamespace>
+    <RootNamespace>RealisticSkies</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

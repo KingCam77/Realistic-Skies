@@ -7,15 +7,13 @@ using HarmonyLib;
 using UnityEngine;
 
 
-namespace RealisticStars
+namespace RealisticSkies
 {
     public class StarPatch
     {
         public static void StartStarPatch()
         {
-            // Skybox Setup
-            StarPatch.Skybox = GameObject.Find("stars skybox");
-            StarPatch.Skybox.transform.localEulerAngles = Vector3.zero;
+            //StarPatch.Skybox.transform.localEulerAngles = Vector3.zero;
 
             if(Plugin.configStarType.Value == "New")
                 texpath = "Assets/Texture2D/ImprovedStars.tif";
@@ -24,33 +22,28 @@ namespace RealisticStars
             else
                 texpath = "Assets/Texture2D/DebugStars.tif";
 
-            MatSetup.SetMat(texpath, StarPatch.Skybox);
+            MatSetup.SetMat(texpath, SkyboxManager.starSkybox);
 
             StarPatch.moonLight = GameObject.Find("moon light water");
-
-            // Sideral Rot Setup
-            SiderialRot.Set(0.0f, 0.0f, 0.0f);
         }
 
 
         public static void UpdateStarPatch()
         {
-            if(Plugin.configSiderialToggle.Value)
-            {
-                float rotateVal = -360 * (Patches.year % 1);
-
-                SiderialRot.Set(rotateVal, 0.0f, 0.0f);
-
-                StarPatch.Skybox.transform.localEulerAngles = SiderialRot;
-            }
-
+            
+            
             float intensity = StarPatch.moonLight.GetComponent<Light>().intensity;
             StarPatch.scale = (-0.75f * intensity * intensity + 1);
 
             if (Plugin.configMoonDimToggle.Value)
             {
-                MatSetup.SetAlpha(Patches.lerp * Patches.lerp * Patches.lerp * StarPatch.scale, StarPatch.Skybox);
+                MatSetup.SetAlpha(Patches.lerp * Patches.lerp * Patches.lerp * StarPatch.scale, SkyboxManager.starSkybox);
             }
+            else
+            {
+                MatSetup.SetAlpha(Patches.lerp * Patches.lerp * Patches.lerp, SkyboxManager.starSkybox);
+            }
+
 
             if (Plugin.configZodiacToggle.Value)
             {
@@ -62,7 +55,7 @@ namespace RealisticStars
 
         public static Vector3 SiderialRot;
 
-        public static GameObject Skybox;
+        public static GameObject OldSkybox;
 
         public static GameObject moonLight;
 

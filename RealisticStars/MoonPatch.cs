@@ -7,7 +7,7 @@ using HarmonyLib;
 using UnityEngine;
 
 
-namespace RealisticStars
+namespace RealisticSkies
 {
     public class MoonPatch
     {
@@ -49,7 +49,7 @@ namespace RealisticStars
                 float intensity = MoonPatch.moonLight.GetComponent<Light>().intensity;
                 MatSetup.SetAlpha(0.5f * intensity, MoonPatch.moonHalo);
 
-                MoonPatch.moonHalo.transform.LookAt(StarPatch.Skybox.transform.position);
+                MoonPatch.moonHalo.transform.LookAt(SkyboxManager.Skybox.transform.position);
 
             }
         }
