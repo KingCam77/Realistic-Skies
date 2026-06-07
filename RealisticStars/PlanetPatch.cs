@@ -55,6 +55,11 @@ namespace RealisticSkies
                 MatSetup.SetMat("Assets/Texture2D/PlanetTex/BlueBright.tif", this.sprite);
                 MatSetup.SetMat("Assets/Texture2D/PlanetTex/BlueGlare.tif", this.sprite.transform.GetChild(0).gameObject);
             }
+            else if (flag == 4)
+            {
+                MatSetup.SetMat("Assets/Texture2D/PlanetTex/YellowBright.tif", this.sprite);
+                MatSetup.SetMat("Assets/Texture2D/PlanetTex/YellowGlare.tif", this.sprite.transform.GetChild(0).gameObject);
+            }
             else
             {
                 this.sprite.SetActive(false);
@@ -91,14 +96,14 @@ namespace RealisticSkies
             // Create all the planets
 
             //                            a,     ecc,     inc,     omega,     Omega,           tau,             n,            
-            planet1 =    new Planet( 0.338f, 0.2551f, 7.2318f, 232.8555f, 190.2106f,  0.149723693f, 31.938026275f,  -0.5497f, 1, 1);
-            planet2 =    new Planet( 0.691f, 0.0481f, 3.7061f, 138.0542f, 181.0618f,  0.252671978f, 10.935911572f,  -3.0252f, 2, 1);
-            planetHome = new Planet( 1.000f, 0.0299f, 0.0000f,  82.1461f,   0.0000f,  0.781158692f,  6.282937626f,   0.0000f, 2, 0);
-            planet4 =    new Planet( 1.913f, 0.0599f, 1.5124f,  83.9214f, 160.2411f,  3.277829459f,  2.373701518f,  -2.8434f, 2, 2);
-            planet5 =    new Planet( 3.161f, 0.0301f, 2.2562f, 180.2270f, 158.8375f,  1.330928882f,  1.117951638f,   0.8716f, 1, 1);
-            planet6 =    new Planet( 5.265f, 0.0428f, 1.3859f, 109.6172f, 181.3787f,  3.652533004f,  0.520007917f, -10.1394f, 3, 3);
-            planet7 =    new Planet(10.698f, 0.0378f, 1.3687f,   3.5402f, 214.7115f, 11.557890809f,  0.179568460f,  -9.2811f, 3, 1);
-            planet8 =    new Planet(17.223f, 0.0522f, 1.9646f, 205.7822f, 190.8910f, 38.382823613f,  0.087902710f,  -7.3065f, 3, 1);
+            planet1 =    new Planet( 0.338f, 0.2551f, 7.2318f, 232.8555f, 190.2106f,  0.149723693f, 31.938026275f,  0.1900f, 1, 1);
+            planet2 =    new Planet( 0.691f, 0.0481f, 3.7061f, 138.0542f, 181.0618f,  0.252671978f, 10.935911572f, -2.2856f, 2, 4);
+            planetHome = new Planet( 1.000f, 0.0299f, 0.0000f,  82.1461f,   0.0000f,  0.781158692f,  6.282937626f,  0.0000f, 2, 0);
+            planet4 =    new Planet( 1.913f, 0.0599f, 1.5124f,  83.9214f, 160.2411f,  3.277829459f,  2.373701518f, -2.1037f, 2, 2);
+            planet5 =    new Planet( 3.161f, 0.0301f, 2.2562f, 180.2270f, 158.8375f,  1.330928882f,  1.117951638f,  1.6111f, 1, 1);
+            planet6 =    new Planet( 5.265f, 0.0428f, 1.3859f, 109.6172f, 181.3787f,  3.652533004f,  0.520007917f, -9.3997f, 3, 3);
+            planet7 =    new Planet(10.698f, 0.0378f, 1.3687f,   3.5402f, 214.7115f, 11.557890809f,  0.179568460f, -8.5668f, 3, 4);
+            planet8 =    new Planet(17.223f, 0.0522f, 1.9646f, 205.7822f, 190.8910f, 38.382823613f,  0.087902710f, -6.5668f, 3, 1);
         }
 
 

@@ -21,6 +21,24 @@ namespace RealisticSkies
             GameObject Skybox = GameObject.Find("stars skybox");
             Patches.starMat = Skybox.GetComponent<MeshRenderer>().material;
 
+            var mats = assets.LoadAllAssets(typeof(Material));
+            foreach (Material m in mats)
+            {
+                var shaderName = m.shader.name;
+                //Debug.Log("RealisticSkies: trying to refresh shader: " + shaderName + " in material " + m.name);
+                var newShader = Shader.Find(shaderName);
+                if (newShader != null)
+                {
+                    m.shader = newShader;
+                    //Debug.Log("RealisticSkies: refreshed shader: " + shaderName + " in material " + m.name);
+
+                }
+                else
+                {
+                    Debug.LogWarning("RealisticSkies: unable to refresh shader: " + shaderName + " in material " + m.name);
+                }
+            }
+
             foreach (GameObject gameObject in Patches.assets.LoadAllAssets<GameObject>())
             {
                 if (gameObject.GetComponent<SaveablePrefab>() is SaveablePrefab saveable)
@@ -49,11 +67,20 @@ namespace RealisticSkies
                         Patches.shopKeepers.Add(info.parentIslandIndex, info);
 
                         Debug.Log($"RealisticSkies: added {info.name} to directory");
+
+                        if (info.parentIslandIndex == 27)
+                        {
+                            //Load Observatory stuff
+                            gameObject.transform.GetChild(2).GetChild(2).gameObject.AddComponent<ObsTelescope>();
+
+                            gameObject.transform.GetChild(2).GetChild(6).gameObject.AddComponent<Ladder>();
+                            //var streetlight = GameObject.Find("east_street_lamp (1)").GetComponent<IslandStreetlight>().streetlightManager;
+                            //gameObject.transform.GetChild(2).GetChild(5).GetChild(1).gameObject.GetComponent<IslandStreetlight>().streetlightManager = streetlight;
+
+                        }
                     }
                 }
             }
-
-
         }
 
         public static AssetBundle assets;
@@ -104,20 +131,25 @@ namespace RealisticSkies
             [HarmonyPatch("Start")]
             public static void Initialization()
             {
-                Patches.LoadAssets();
+                if (Patches.assets == null)
+                {
+                    Patches.LoadAssets();
+                }
 
                 Patches.Zenv = GameObject.Find("Z environment");
 
                 Patches.yearLen = Plugin.configYearLen.Value;
-
-                SkyboxManager.StartSkybox();
-
-                MoonPatch.StartMoonPatch();
-                StarPatch.StartStarPatch();
-
-                if (Plugin.configPlanetsToggle.Value)
+                if (!Plugin.configDisable.Value)
                 {
-                    PlanetPatch.StartPlanetsPatch();
+                    SkyboxManager.StartSkybox();
+
+                    MoonPatch.StartMoonPatch();
+                    StarPatch.StartStarPatch();
+
+                    if (Plugin.configPlanetsToggle.Value)
+                    {
+                        PlanetPatch.StartPlanetsPatch();
+                    }
                 }
             }
 
@@ -133,14 +165,17 @@ namespace RealisticSkies
 
                 Patches.year = dayAct / (float) Patches.yearLen;
 
-                SkyboxManager.UpdateSkybox();
-
-                StarPatch.UpdateStarPatch();
-                MoonPatch.UpdateMoonPatch();
-
-                if (Plugin.configPlanetsToggle.Value)
+                if (!Plugin.configDisable.Value)
                 {
-                    PlanetPatch.UpdatePlanetsPatch();
+                    SkyboxManager.UpdateSkybox();
+
+                    StarPatch.UpdateStarPatch();
+                    MoonPatch.UpdateMoonPatch();
+
+                    if (Plugin.configPlanetsToggle.Value)
+                    {
+                        PlanetPatch.UpdatePlanetsPatch();
+                    }
                 }
             }
         }

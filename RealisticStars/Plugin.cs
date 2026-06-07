@@ -23,6 +23,11 @@ namespace RealisticSkies
                                          "New", // The default value
                                          "Night sky to load: New, Real, Debug."); // Description of the option to show in the config file
 
+            configDisable = Config.Bind("General",      // The section under which the option is shown
+                                         "Disable all sky stuff",  // The key of the configuration option in the configuration file
+                                         false, // The default value
+                                         "disables all the sky stuff, leaving the default sky. Dont turn this on it would make me sad :("); // Description of the option to show in the config file
+
             configYearLen = Config.Bind("General",
                                          "Year Length",
                                          92,
@@ -64,7 +69,7 @@ namespace RealisticSkies
 
         public const string PLUGIN_NAME = "RealisticSkies";
 
-        public const string PLUGIN_VERSION = "2.0.0";
+        public const string PLUGIN_VERSION = "2.1.0";
 
         internal static ConfigEntry<string> configStarType;
 
@@ -81,6 +86,8 @@ namespace RealisticSkies
         internal static ConfigEntry<bool> configZodiacToggle;
 
         internal static ConfigEntry<bool> configPlanetsToggle;
+
+        internal static ConfigEntry<bool> configDisable;
 
         internal static Plugin instance;
     }

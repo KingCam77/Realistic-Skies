@@ -32,9 +32,6 @@ namespace RealisticSkies
 
         public static void UpdateSkybox()
         {
-
-            // Need to add longitude adjustment, rise earlier in EA, set later in AA
-
             Vector3 globeCoords = FloatingOriginManager.instance.GetGlobeCoords(SkyboxManager.player);
             float x = globeCoords.x;
             float z = globeCoords.z;

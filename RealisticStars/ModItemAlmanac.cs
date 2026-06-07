@@ -200,6 +200,10 @@ namespace RealisticSkies
                     }
                 }
             }
+            else
+            {
+                base.OnScroll(input);
+            }
         }
 
 
@@ -245,7 +249,7 @@ namespace RealisticSkies
             base.holdDistance = 0.36f;
 
             base.GetComponent<MeshFilter>().sharedMesh = this.openMesh;
-            this.GetComponent<BoxCollider>().size = this.openColSize;
+            base.GetComponent<BoxCollider>().size = this.openColSize;
         }
 
         private void Close()
@@ -270,6 +274,7 @@ namespace RealisticSkies
             if (this.amount < 0f)
             {
                 this.Open();
+                this.heldRotationOffset = 0f;
             }
             else
             {

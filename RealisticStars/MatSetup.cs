@@ -6,12 +6,14 @@ using BepInEx.Configuration;
 using HarmonyLib;
 using UnityEngine;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Drawing.Drawing2D;
 
 
 namespace RealisticSkies
 {
     public class MatSetup
     {
+
 
         public static void SetMat(string texPath, GameObject obj)
         {
