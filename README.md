@@ -1,7 +1,10 @@
 # Realistic Skies
 A complete overhaul of the skies in Sailwind adding more depth, realism, and interaction to stars.
 
-# Features
+
+
+## Features
+A list of all features added by Realistic Skies.
 
 ## Sky
 
@@ -35,6 +38,8 @@ Realistic Skies features a full solar system with 7 visible planets (to varying 
 ##### Config Options
 - Planets: *this setting enables the planets. Default = true*
 
+
+
 ## Locations
 Realistic Skies adds three merchants at each of the capital cities and one special location.
 
@@ -44,8 +49,10 @@ Kicia Bay Observatory is a unique location built on the mountain next to Kicia B
 #### Telescope
 Kicia Bay Observatory also features a clock drive equitorial telescope that can be used to observe the heavens in detail. Its clock drive will track a particular spot in the sky throughout the sky without manual input. When interacting with the base **W**, **A**, **S** and **D** can be used to change the siderial hour angle and declination that its targeting.
 
+
+
 ## Items
-Realistic Skies features a number of items which allow you to interact with the stars in more depth than the base game, primarily accurate and indepth celestial navigation mirroring real life practices.
+Realistic Skies features a number of items which allow you to interact with the stars in more depth than the base game, primarily accurate and indepth celestial navigation mirroring real life practices.\
 **All items were designed with the new skybox in mind and may not work for real stars or differing year lengths**
 
 ### Quintant
@@ -82,3 +89,50 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 - Click: *this rotates the planisphere to the south side*
 - Scroll while rotated: *this advances or decreases the rotation by a fine tuning amount that can reach any day or hour combination*
 
+
+<br/>
+<br/>
+<br/>
+
+## Work In Progress/Near Term Goals
+
+#### Reworked Star Map
+Current star map texture is really bad and hard to read, fix both of these and make it fit in.
+
+#### Star Catalogs
+Book of all ~9000 visible stars listing: IDs, Name (if they have one), RA, Dec, Mag, Constellation
+Avalible at Kicia Bay
+
+#### Star Charts
+Book with maps of each constellation/segment of the sky + whole sky. Basically fancy star map
+Avalible at Kicia Bay
+
+#### Orrery
+Desk toy with the planets and stuff, have to wind it up to keep it moving.
+Avalible at Kicia Bay
+
+#### Astrolabe
+Still need to learn how these work
+
+#### Meteor Showers
+Ask for RadDude's permission in adapting his and make some improvements to fit with the rest of the mod.
+
+## Long Term Goals/Hopeful Dreams
+
+#### Better Deep Sky Objects
+Current Galaxy Texture clips out other galaxies that should be visible, like andromeda galaxy
+
+#### Dimmer Objects
+Fainter Stars and galaxies only visible through telescope. I have the faint stars already generated (dowm to MAG 10). Technical details are the issue.
+
+#### Higher Res Textures
+bright objects appear large and blurry in telescope, related to dimmer objects
+
+#### Complete Rework of how the moon behaves
+Rework moon to use same code as planets, more physically accurate and deterministic
+
+#### Comets
+Periodic Comets with trails (probably a lot of work for something which is infrequently seen)
+
+#### Complete Rework of the sun
+This is the big pipe dream, rework the sun so it doesnt trace a perfect path. Would mess with a lot of stuff and break the base game navigation methods, potentially completely. Though it would let me add inclination to the planet.
