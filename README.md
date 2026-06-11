@@ -95,7 +95,7 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 <br/>
 
 ## Work In Progress/Near Term Goals
-I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on
+I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on.
 
 #### Reworked Star Map
 Current star map texture is really bad and hard to read, fix both of these and make it fit in.
@@ -118,7 +118,11 @@ Still need to learn how these work
 #### Meteor Showers
 Ask for RadDude's permission in adapting his and make some improvements to fit with the rest of the mod.
 
+
+<br/>
+
 ## Long Term Goals/Hopeful Dreams
+I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on.
 
 #### Better Deep Sky Objects
 Current Galaxy Texture clips out other galaxies that should be visible, like andromeda galaxy
