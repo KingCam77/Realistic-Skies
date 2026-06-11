@@ -95,6 +95,7 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 <br/>
 
 ## Work In Progress/Near Term Goals
+I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on
 
 #### Reworked Star Map
 Current star map texture is really bad and hard to read, fix both of these and make it fit in.
