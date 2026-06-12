@@ -59,6 +59,12 @@ namespace RealisticSkies
                         gameObject.AddComponent<ModItemAlmanac>();
                         Debug.Log($"RealisticSkies: replaced almanac ship item");
                     }
+                    if (saveable.prefabIndex == 705 && gameObject.GetComponent<ShipItem>() is ShipItem)
+                    {
+                        Destroy(gameObject.GetComponent<ShipItem>());
+                        gameObject.AddComponent<ModItemPlanisphere>();
+                        Debug.Log($"RealisticSkies: replaced planisphere ship item");
+                    }
                 } 
                 else
                 {

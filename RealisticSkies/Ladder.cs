@@ -9,7 +9,6 @@ namespace RealisticSkies
         public override void OnActivate()
         {
             Transform transform = Refs.charController.transform;
-            Debug.LogWarning("HarbourLadder: player transform parent is " + transform.parent.gameObject.name);
             bool flag = !(transform.parent.gameObject.name != "_shifting world");
             if (flag)
             {

@@ -46,21 +46,25 @@ namespace RealisticSkies
         private GameObject p1dec1;
         private GameObject p1long2;
         private GameObject p1dec2;
+        private GameObject p1mag;
 
         private GameObject p2long1;
         private GameObject p2dec1;
         private GameObject p2long2;
         private GameObject p2dec2;
+        private GameObject p2mag;
 
         private GameObject p3long1;
         private GameObject p3dec1;
         private GameObject p3long2;
         private GameObject p3dec2;
+        private GameObject p3mag;
 
         private GameObject p4long1;
         private GameObject p4dec1;
         private GameObject p4long2;
         private GameObject p4dec2;
+        private GameObject p4mag;
 
         private GameObject HrTC1;
         private GameObject HrTC2;
@@ -77,6 +81,8 @@ namespace RealisticSkies
         private GameObject HrTC13;
         private GameObject HrTC14;
         private GameObject HrTC15;
+
+        private Camera playerCam;
 
         private ModItemAlmanac()
         {
@@ -100,6 +106,8 @@ namespace RealisticSkies
             this.closedEmpty = base.transform.GetChild(0).gameObject;
             this.openEmpty = base.transform.GetChild(1).gameObject;
 
+            this.playerCam = GameObject.Find("Outline Camera").GetComponent<Camera>();
+
             this.closedMesh = base.transform.GetChild(0).GetChild(0).gameObject.GetComponent<MeshFilter>().sharedMesh;
             this.openMesh = base.transform.GetChild(1).GetChild(0).gameObject.GetComponent<MeshFilter>().sharedMesh;
             base.holdDistance = 0.75f;
@@ -119,21 +127,25 @@ namespace RealisticSkies
             this.p1dec1 = this.dayEntriesLeft.transform.GetChild(5).GetChild(1).gameObject;
             this.p1long2 = this.dayEntriesLeft.transform.GetChild(5).GetChild(2).gameObject;
             this.p1dec2 = this.dayEntriesLeft.transform.GetChild(5).GetChild(3).gameObject;
+            this.p1mag = this.dayEntriesLeft.transform.GetChild(5).GetChild(4).gameObject;
 
             this.p2long1 = this.dayEntriesLeft.transform.GetChild(6).GetChild(0).gameObject;
             this.p2dec1 = this.dayEntriesLeft.transform.GetChild(6).GetChild(1).gameObject;
             this.p2long2 = this.dayEntriesLeft.transform.GetChild(6).GetChild(2).gameObject;
             this.p2dec2 = this.dayEntriesLeft.transform.GetChild(6).GetChild(3).gameObject;
+            this.p2mag = this.dayEntriesLeft.transform.GetChild(6).GetChild(4).gameObject;
 
             this.p3long1 = this.dayEntriesLeft.transform.GetChild(7).GetChild(0).gameObject;
             this.p3dec1 = this.dayEntriesLeft.transform.GetChild(7).GetChild(1).gameObject;
             this.p3long2 = this.dayEntriesLeft.transform.GetChild(7).GetChild(2).gameObject;
             this.p3dec2 = this.dayEntriesLeft.transform.GetChild(7).GetChild(3).gameObject;
+            this.p3mag = this.dayEntriesLeft.transform.GetChild(7).GetChild(4).gameObject;
 
             this.p4long1 = this.dayEntriesLeft.transform.GetChild(8).GetChild(0).gameObject;
             this.p4dec1 = this.dayEntriesLeft.transform.GetChild(8).GetChild(1).gameObject;
             this.p4long2 = this.dayEntriesLeft.transform.GetChild(8).GetChild(2).gameObject;
             this.p4dec2 = this.dayEntriesLeft.transform.GetChild(8).GetChild(3).gameObject;
+            this.p4mag = this.dayEntriesLeft.transform.GetChild(8).GetChild(4).gameObject;
 
             this.HrTC1  = this.hourEntriesLeft.transform.GetChild(1).GetChild(0).gameObject;
             this.HrTC2  = this.hourEntriesLeft.transform.GetChild(1).GetChild(1).gameObject;
@@ -152,6 +164,7 @@ namespace RealisticSkies
             this.HrTC14 = this.hourEntriesRight.transform.GetChild(1).GetChild(3).gameObject;
             this.HrTC15 = this.hourEntriesRight.transform.GetChild(1).GetChild(4).gameObject;
 
+            base.holdDistance = 0.75f;
             //page is stored in the amount value
 
             if (this.amount == 0f)
@@ -246,7 +259,9 @@ namespace RealisticSkies
 
             loadPage(this.page);
 
-            base.holdDistance = 0.36f;
+
+
+            base.holdDistance = 181.6f * Mathf.Pow(this.playerCam.fieldOfView,-1.38f);
 
             base.GetComponent<MeshFilter>().sharedMesh = this.openMesh;
             base.GetComponent<BoxCollider>().size = this.openColSize;
@@ -330,31 +345,37 @@ namespace RealisticSkies
 
                 string AHApass = "";
                 string DECpass = "";
-                calcPlanet(day1, PlanetPatch.planet2, out AHApass, out DECpass);
+                string MAGpass = "";
+
+                calcPlanet(day1, PlanetPatch.planet2, out AHApass, out DECpass, out MAGpass);
                 this.p1long1.GetComponent<TextMesh>().text = AHApass;
                 this.p1dec1.GetComponent<TextMesh>().text = DECpass;
-                calcPlanet(day2, PlanetPatch.planet2, out AHApass, out DECpass);
+                this.p1mag.GetComponent<TextMesh>().text = MAGpass;
+                calcPlanet(day2, PlanetPatch.planet2, out AHApass, out DECpass, out MAGpass);
                 this.p1long2.GetComponent<TextMesh>().text = AHApass;
                 this.p1dec2.GetComponent<TextMesh>().text = DECpass;
 
-                calcPlanet(day1, PlanetPatch.planet4, out AHApass, out DECpass);
+                calcPlanet(day1, PlanetPatch.planet4, out AHApass, out DECpass, out MAGpass);
                 this.p2long1.GetComponent<TextMesh>().text = AHApass;
                 this.p2dec1.GetComponent<TextMesh>().text = DECpass;
-                calcPlanet(day2, PlanetPatch.planet4, out AHApass, out DECpass);
+                this.p2mag.GetComponent<TextMesh>().text = MAGpass;
+                calcPlanet(day2, PlanetPatch.planet4, out AHApass, out DECpass, out MAGpass);
                 this.p2long2.GetComponent<TextMesh>().text = AHApass;
                 this.p2dec2.GetComponent<TextMesh>().text = DECpass;
 
-                calcPlanet(day1, PlanetPatch.planet6, out AHApass, out DECpass);
+                calcPlanet(day1, PlanetPatch.planet6, out AHApass, out DECpass, out MAGpass);
                 this.p3long1.GetComponent<TextMesh>().text = AHApass;
                 this.p3dec1.GetComponent<TextMesh>().text = DECpass;
-                calcPlanet(day2, PlanetPatch.planet6, out AHApass, out DECpass);
+                this.p3mag.GetComponent<TextMesh>().text = MAGpass;
+                calcPlanet(day2, PlanetPatch.planet6, out AHApass, out DECpass, out MAGpass);
                 this.p3long2.GetComponent<TextMesh>().text = AHApass;
                 this.p3dec2.GetComponent<TextMesh>().text = DECpass;
 
-                calcPlanet(day1, PlanetPatch.planet7, out AHApass, out DECpass);
+                calcPlanet(day1, PlanetPatch.planet7, out AHApass, out DECpass, out MAGpass);
                 this.p4long1.GetComponent<TextMesh>().text = AHApass;
                 this.p4dec1.GetComponent<TextMesh>().text = DECpass;
-                calcPlanet(day2, PlanetPatch.planet7, out AHApass, out DECpass);
+                this.p4mag.GetComponent<TextMesh>().text = MAGpass;
+                calcPlanet(day2, PlanetPatch.planet7, out AHApass, out DECpass, out MAGpass);
                 this.p4long2.GetComponent<TextMesh>().text = AHApass;
                 this.p4dec2.GetComponent<TextMesh>().text = DECpass;
             }
@@ -403,10 +424,11 @@ namespace RealisticSkies
         }
 
 
-        private void calcPlanet(int day, Planet planetstruct, out string AHA, out string DEC)
+        private void calcPlanet(int day, Planet planetstruct, out string AHA, out string DEC, out string MAG)
         {
             AHA = "\n";
             DEC = "\n";
+            MAG = "MAG ";
 
             for (int hr = 0; hr < 24; hr++)
             {
@@ -432,6 +454,33 @@ namespace RealisticSkies
                 AHA += degToDisp(longitude, false) + "\n";
                 DEC += degToDisp(Dec, false) + "\n";
 
+                float P = Vector3.Angle(-planetstruct.pos, -D);
+
+
+                if (hr == 0)
+                {
+                    float Q = 0;
+                    if (planetstruct.type == 1)
+                    {
+                        Q = -2.5f * Mathf.Log(0.72f * Mathf.Exp(-3.332f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 0.631f)) + 0.28f * Mathf.Exp(-1.862f * Mathf.Pow(Mathf.Tan(P / 2.0f * Mathf.Deg2Rad), 1.218f)), 10.0f);
+                    }
+                    else if (planetstruct.type == 2)
+                    {
+                        Q = -0.00106f * P + 0.0002054f * P * P;
+                    }
+                    else if (planetstruct.type == 3)
+                    {
+                        Q = -0.00037f * P + 0.000615f * P * P;
+                    }
+
+                    float RD = D.magnitude * planetstruct.pos.magnitude * 0.68f * 0.68f;
+                    float apparent = planetstruct.absBright + 5 * Mathf.Log(RD, 10.0f) + Q;
+                    if (apparent > 0)
+                    {
+                        MAG += " ";
+                    }
+                    MAG += apparent.ToString("F2");
+                }
             }
 
 

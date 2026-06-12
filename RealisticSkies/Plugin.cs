@@ -69,7 +69,7 @@ namespace RealisticSkies
 
         public const string PLUGIN_NAME = "RealisticSkies";
 
-        public const string PLUGIN_VERSION = "2.1.0";
+        public const string PLUGIN_VERSION = "2.2.1";
 
         internal static ConfigEntry<string> configStarType;
 
