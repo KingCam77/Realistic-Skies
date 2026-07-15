@@ -1,7 +1,9 @@
 # Realistic Skies
 A complete overhaul of the skies in Sailwind adding more depth, realism, and interaction to stars.
 
-
+## Tutorial
+This video walks through how to use the instruments and obtaining a fix from the stars
+https://www.youtube.com/watch?v=06BABS5Zv-U
 
 ## Features
 A list of all features added by Realistic Skies.
