@@ -1,6 +1,6 @@
 # Realistic Skies 2.3.0F
 
-A fork of KingCam77's Realistic Skies, made with his permission. The sky now has a sun and moon you can navigate by, a way to find longitude without a clock, sailors' constellations with their legends, and a scroll that tells it all.
+A fork of KingCam77's Realistic Skies, made with his permission. You can navigate by a sun and moon now, a way to find longitude without a clock, sailors' constellations with their legends, and a scroll that tells it all.
 
 ## Navigating by the sun and the moon
 - **Sun and Moon tables in the Almanac.** Every page now lists the sun's and the moon's hour angle (AHA) and declination for every hour, next to the bright stars, and how much of the moon is lit. Use them like the planet columns.
