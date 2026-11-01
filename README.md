@@ -2,6 +2,11 @@
 
 A fork of KingCam77's Realistic Skies, made with his permission. You can navigate by a sun and moon now, a way to find longitude without a clock added, sailors' constellations with their legends, and a scroll that tells it all.
 
+<img width="2114" height="1439" alt="image" src="https://github.com/user-attachments/assets/9c87d144-c2ea-4d0f-8c10-47ce643e6949" />
+
+<img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
+
+
 ## Navigating by the sun and the moon
 - **Sun and Moon tables in the Almanac.** Every page now lists the sun's and the moon's hour angle (AHA) and declination for every hour, next to the bright stars, and how much of the moon is lit. Use them like the planet columns.
 - **Daylight fixes.** A noon sight of the sun gives your latitude, and the moon is often up during the day: take the sun and the moon together for a full position without waiting for night.
