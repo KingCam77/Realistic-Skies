@@ -1,145 +1,35 @@
-# Realistic Skies
-A complete overhaul of the skies in Sailwind adding more depth, realism, and interaction to stars.
+# Realistic Skies 2.3.0F
 
-## Tutorial
-This video walks through how to use the instruments and obtaining a fix from the stars
-https://www.youtube.com/watch?v=06BABS5Zv-U
+A fork of KingCam77's Realistic Skies, made with his permission. The sky now has a sun and moon you can navigate by, a way to find longitude without a clock, sailors' constellations with their legends, and a scroll that tells it all.
 
-## Features
-A list of all features added by Realistic Skies.
+## Navigating by the sun and the moon
+- **Sun and Moon tables in the Almanac.** Every page now lists the sun's and the moon's hour angle (AHA) and declination for every hour, next to the bright stars, and how much of the moon is lit. Use them like the planet columns.
+- **Daylight fixes.** A noon sight of the sun gives your latitude, and the moon is often up during the day: take the sun and the moon together for a full position without waiting for night.
+- **A steadier moon.** The moon no longer drifts while you are in a shop or at the shipyard. Its orbit is tilted and slowly turns, so full moons ride high or low depending on the season, and the Almanac predicts all of it.
 
-## Sky
+## Longitude without a clock: lunar distances
+- Hold the quintant and press **L** to switch it to lunar distance mode. Click a star (or the sun) to lock onto it, then click the moon: the quintant shows the angle between them.
+- The Almanac has a new **Lunar Distances** page after the planets: the distance from the moon to the sun and to up to 8 bright stars, for every hour. Find your two hours, split the difference, and you have the time at the zero meridian, and with it your longitude.
+- Turn off **Quintant Clock** in the config if you want the full challenge: the quintant no longer tells you the time, so a chronometer or the moon has to.
 
-### Brand New Skybox
-Realistic Skies features a completely brand new skybox build from real data to create a realistic, good looking, but unique sky. The new skybox also has some additional behaviors to improve the looks and bring it closer to reality.
-The sky will rotate over the course of the year as the planet moves around the Sun, stars will rise and set through out the year, some constellations may only be visible later in the game.
-Additionally the stars will dim when the moon is out, making fainter stars harder to see.
+## Seasons (optional)
+- **Axial Tilt**: tilt the planet's axis and the sun climbs higher in summer and lower in winter, days grow and shrink, and the planets' path tilts against the stars. Off by default (Earth is 23.4).
+- **Equation of Time**: noon drifts up to about 20 minutes before or after 12:00 over the year, as on a real planet. The Almanac's sun table already includes it.
 
-##### Config Options
-- Disable Everything: *this is used to disable all changes to the sky, use if you only want the items. Default = false*
-- Star Type: *this changes which skybox is displayed, New is the custom sky the mod focuses on, Real is the real world stars, Debug is a test pattern. Default = New*
-- Year Length: *this changes how many days a year takes. Default = 92*
-- Siderial Rotation: *this causes the stars to rotate over the year. Default = true*
-- Star Dimming: *this causes the stars to dim when the moon is bright. Default = true*
+## Learning the sky
+- **21 constellations** drawn by sailors across the whole sky: Corvin's Sloop, Morvath's Maw, the Widow's Grief, the Northern Bow and the Arrowhead around the North Star; the Harpoon, Ship's Cat, the Mouse, the Gull, the Pipe, the Whirlpool, the Fisherman and his Net and the Lug Sail around Oriens; the Scorpion, the Hunting Horn, the Witch's Hat, the Harp and the Haymaker on the other half of the sky; and the Bull, the Cobra and the Fiddler Crab in the far south.
+- **Names for the stars and planets.** 32 stars have sailors' names (Willow, Corvin, Lantern, Mouser, Oboshi, Lulu...), and the seven planets are Vesta, Lux, Ember, Sister, Leviathan, Pilgrim and Teardrop. The Almanac shows the names with the old letters in brackets, so nothing you knew is lost (turn off **Star Names** to go back to letters).
+- **New Star Map.** Both poles and the equator band with every constellation drawn in and the bright stars named.
+- **Sea Legends**, a new scroll sold in the capitals, alongside the Star Map (about 280 crowns). Every constellation with an engraving of its figure, how to find it and what it points to (the Arrowhead and the Northern Bow to the North Star, the Cobra to the southern pole, Oriens to Milnead), the names of the stars and planets, and the old tales. Scroll to turn the pages; right click or **R** rolls it up while you hold it.
+- **Star Labels** (training, off by default): at night, look at a star or a planet and its name, atlas designation, SHA and Dec fade in next to it, with its constellation drawn on the sky.
 
-### Moon Tweaks
-The moon is resized to closer match the real size of the moon. To help with finding the much smaller moon, a glare is added to increase its apparent size without blocking the stars behind it.
+## Lore
+- Each region named the part of the sky it knows best: the sailors of **Aestrin** gave plain sea names to the stars of the north and around Oriens, the stargazers of **Al'Ankh** named the evening and southern stars in their own tongue, and the stars of the Cobra carry the names of the **Emerald Archipelago**, where her legend is told.
+- Six legends: Corvin's Sloop (the captain, his wife Willow and the sea monster Morvath), the Witch's Hat, the Ship's Cat and the Mouse, the Fisherman and the Gull, the Haymaker and the Bull, and the Cobra.
 
-##### Config Options
-- Moon Size: *this setting shrinks the moon down to realistic size and enables the bloom. Default = true*
+## Fixes
+- Planets follow their orbits more accurately (the innermost planet could be off by several degrees).
 
-### Zodiacal Light
-Realistic Skies also adds the zodiacal light, the band of brightness along the ecliptic.
-
-##### Config Options
-- Zodiacal Light: *this setting enables the zodiacal light. Default = true*
-
-### Planets
-Realistic Skies features a full solar system with 7 visible planets (to varying degrees of difficulty). These planets follow real paths through the stars and change brightness appropriately.
-
-##### Config Options
-- Planets: *this setting enables the planets. Default = true*
-
-
-
-## Locations
-Realistic Skies adds three merchants at each of the capital cities and one special location.
-
-### Kicia Bay Observatory
-Kicia Bay Observatory is a unique location built on the mountain next to Kicia Bay. Here is where the more niche instruments can be found that can be useful but not required.
-
-#### Telescope
-Kicia Bay Observatory also features a clock drive equitorial telescope that can be used to observe the heavens in detail. Its clock drive will track a particular spot in the sky throughout the sky without manual input. When interacting with the base **W**, **A**, **S** and **D** can be used to change the siderial hour angle and declination that its targeting.
-
-
-
-## Items
-Realistic Skies features a number of items which allow you to interact with the stars in more depth than the base game, primarily accurate and indepth celestial navigation mirroring real life practices.\
-**All items were designed with the new skybox in mind and may not work for real stars or differing year lengths**
-
-### Quintant
-The Quintant is by far the most important item added. It allows for precision measuring of heights and times simulateously. It can be found at all of the locations. The Quintant is safe to put in your inventory with a reading, it will only lose that reading upon a game start.
-
-##### Controls
-- Scroll: *this raises or lowers the crosshairs and declutter "shades"*
-- Click: *this takes a reading/inspects the quintant*
-- Scroll while inspecting: *this raises or lowers the actual shades*
-
-##### Config Options
-- Quintant Help: *This changes how much of the reading is displayed in text, None, Arc is just arc-minutes, Sec is arc-minutes and seconds, and full is both the full time and full angle. Default = Arc*
-
-#### Almanac
-The Almanac is just as useful as the Quintant and is required for preforming celestial navigation. It provides the necessary angles of the sky, the 51 brightest stars, and the 4 brightest planets. It can be found at all of the locations. Each Almanac is only good for a year and shows which one on the cover. (this only applies to planets, the stars dont change by year)\
-**Only works with default star set but any year length**
-
-##### Controls
-- Click: *this opens the Almanac*
-- Scroll while open: *this changes the current page*
-
-#### Star Map
-The Star Map is a simple map of the heavens. The y axis is the declination and the x axis is the siderial hour angle. While it can be used for identifiying stars, the projection can make it challenging. It can be found at all of the capital cities but not Kicia Bay Observatory.
-
-##### Controls
-- Click: *this opens the star map*
-
-#### Planisphere
-The Planisphere is a more advanced star map, showing you what is visible and any current time in an easier to read projection. It is only found at Kicia Bay Observatory.\
-**Only works with default star set and the 92 day year** (with any year length but the day markers and scroll increment becomes inaccurate)
-
-##### Controls
-- Scroll: *this advances or decreases the rotation by exactly one hour*
-- Click: *this rotates the planisphere to the south side*
-- Scroll while rotated: *this advances or decreases the rotation by a fine tuning amount that can reach any day or hour combination*
-
-
-<br/>
-<br/>
-<br/>
-
-## Work In Progress/Near Term Goals
-I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on.
-
-#### Reworked Star Map
-Current star map texture is really bad and hard to read, fix both of these and make it fit in.
-
-#### Star Catalogs
-Book of all ~9000 visible stars listing: IDs, Name (if they have one), RA, Dec, Mag, Constellation
-Avalible at Kicia Bay
-
-#### Star Charts
-Book with maps of each constellation/segment of the sky + whole sky. Basically fancy star map
-Avalible at Kicia Bay
-
-#### Orrery
-Desk toy with the planets and stuff, have to wind it up to keep it moving.
-Avalible at Kicia Bay
-
-#### Astrolabe
-Still need to learn how these work
-
-#### Meteor Showers
-Ask for RadDude's permission in adapting his and make some improvements to fit with the rest of the mod.
-
-
-<br/>
-
-## Long Term Goals/Hopeful Dreams
-I make no promises at how many of these features will get completed or their quality, just a list mostly for myself on what I could and might work on.
-
-#### Better Deep Sky Objects
-Current Galaxy Texture clips out other galaxies that should be visible, like andromeda galaxy
-
-#### Dimmer Objects
-Fainter Stars and galaxies only visible through telescope. I have the faint stars already generated (dowm to MAG 10). Technical details are the issue.
-
-#### Higher Res Textures
-bright objects appear large and blurry in telescope, related to dimmer objects
-
-#### Complete Rework of how the moon behaves
-Rework moon to use same code as planets, more physically accurate and deterministic
-
-#### Comets
-Periodic Comets with trails (probably a lot of work for something which is infrequently seen)
-
-#### Complete Rework of the sun
-This is the big pipe dream, rework the sun so it doesnt trace a perfect path. Would mess with a lot of stuff and break the base game navigation methods, potentially completely. Though it would let me add inclination to the planet.
+## Config
+- New options: Moon Orbit Rework, Moon Inclination, Moon Node Period, Moon Phase Offset, Axial Tilt, Equation of Time, Quintant Clock, Lunar Mode Key, Star Labels, Constellation Lines, Constellation Star Chart, Star Names, Planet Names. The defaults keep the vanilla sun and the quintant clock.
+- Your existing config carries over.
