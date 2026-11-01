@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine;
 
@@ -84,6 +85,20 @@ namespace RealisticSkies
 
         private Camera playerCam;
 
+        // Lunar distance page: runtime copy of "Entries Left" with every column used for a distance
+        private GameObject lunarLeft;
+        private TextMesh lunarTitle;
+        private TextMesh lunarSun1, lunarSun2, lunarSunHeader;
+        private TextMesh[] lunarCol1 = new TextMesh[8];
+        private TextMesh[] lunarCol2 = new TextMesh[8];
+        private TextMesh[] lunarHeader = new TextMesh[8];
+        private string lunarSunHeaderTemplate;
+        private string[] lunarHeaderTemplate = new string[8];
+
+        // Sun & Moon tables on the empty part of the right page (copies of the planet columns)
+        private TextMesh smSunAHA1, smSunDEC1, smSunAHA2, smSunDEC2, smSunNote;
+        private TextMesh smMoonAHA1, smMoonDEC1, smMoonAHA2, smMoonDEC2, smMoonNote;
+
         private ModItemAlmanac()
         {
             if (!constructed)
@@ -91,7 +106,7 @@ namespace RealisticSkies
                 base.value = 4000;
                 base.name = "almanac";
                 base.category = TransactionCategory.toolsAndSupplies;
-                base.inventoryScale = 1f;
+                base.inventoryScale = 0.7f;
                 base.inventoryRotation = -180f;
                 base.furniturePlaceHeight = 0.5f;
                 constructed = true;
@@ -164,23 +179,12 @@ namespace RealisticSkies
             this.HrTC14 = this.hourEntriesRight.transform.GetChild(1).GetChild(3).gameObject;
             this.HrTC15 = this.hourEntriesRight.transform.GetChild(1).GetChild(4).gameObject;
 
-            base.holdDistance = 0.75f;
-            //page is stored in the amount value
+            this.NamePlanets();
+            this.NameStars();
+            this.BuildSunMoonPage();
+            this.BuildLunarPage();
 
-            if (this.amount == 0f)
-            {
-                this.amount = -1.0f;
-                this.Close();
-            } 
-            else if (this.amount > 0f)
-            {
-                this.Open();
-            }
-            else
-            {
-                this.Close();
-            }
-            this.page = (int)Mathf.Abs(base.amount);
+            base.holdDistance = 0.75f;
 
             //year is stored in the health value + 1
 
@@ -189,7 +193,25 @@ namespace RealisticSkies
                 base.health = Mathf.FloorToInt(Patches.year);
             }
 
-            this.pagecount = Mathf.CeilToInt((float)Patches.yearLen / 2.0f) + 1;
+            // with the lunar page every pair of days has two pages: planets, then lunar distances
+            this.pagecount = this.PagesPerPair * Mathf.CeilToInt((float)Patches.yearLen / 2.0f) + 1;
+
+            //page is stored in the amount value
+            // (page, year and page count are set before Open() so a saved open almanac shows its page)
+            if (this.amount == 0f)
+            {
+                this.amount = -1.0f;
+            }
+            this.page = Mathf.Clamp((int)Mathf.Abs(base.amount), 1, this.pagecount);
+
+            if (this.amount > 0f)
+            {
+                this.Open();
+            }
+            else
+            {
+                this.Close();
+            }
 
             this.yearClosed.GetComponent<TextMesh>().text = $"{base.health}";
             this.yearOpen.GetComponent<TextMesh>().text = $"{base.health}";
@@ -251,6 +273,15 @@ namespace RealisticSkies
             base.amount = this.page;
         }
 
+        public override void OnPickup()
+        {
+            base.OnPickup();
+            if (base.amount > 0f)
+            {
+                base.holdDistance = 181.6f * Mathf.Pow(this.playerCam.fieldOfView, -1.38f);
+            }
+        }
+
         private void Open()
         {
             base.amount = Mathf.Abs(base.amount);
@@ -298,8 +329,15 @@ namespace RealisticSkies
             UISoundPlayer.instance.PlayParchmentSound();
         }
 
+        private int PagesPerPair => (this.lunarLeft != null && Celestial.MoonReworkActive) ? 2 : 1;
+
         private void loadPage(int page)
         {
+            if (this.lunarLeft != null)
+            {
+                this.lunarLeft.SetActive(false);
+            }
+
             if (page == this.pagecount)
             {
                 this.dayEntriesLeft.SetActive(false);
@@ -327,18 +365,31 @@ namespace RealisticSkies
             }
             else
             {
-                this.dayEntriesLeft.SetActive(true);
+                int perPair = this.PagesPerPair;
+                int pair = (page + perPair - 1) / perPair;
+                bool lunarPage = perPair == 2 && page % 2 == 0;
+
+                this.dayEntriesLeft.SetActive(!lunarPage);
                 this.dayEntriesRight.SetActive(true);
 
                 this.hourEntriesLeft.SetActive(false);
                 this.hourEntriesRight.SetActive(false);
 
 
-                int day1 = 2 * (page - 1) + (int)this.health * Patches.yearLen;
-                int day2 = 2 * (page - 1) + 1 + (int)this.health * Patches.yearLen;
+                int day1 = 2 * (pair - 1) + (int)this.health * Patches.yearLen;
+                int day2 = 2 * (pair - 1) + 1 + (int)this.health * Patches.yearLen;
 
                 this.dayLeft.GetComponent<TextMesh>().text = $"Days {day1} and {day2} AT";
                 this.dayRight.GetComponent<TextMesh>().text = $"Days {day1} and {day2} AT";
+
+                this.FillSunMoon(day1, day2);
+
+                if (lunarPage)
+                {
+                    this.lunarLeft.SetActive(true);
+                    this.FillLunarPage(day1, day2);
+                    return;
+                }
 
                 this.aries1.GetComponent<TextMesh>().text = calcAries(day1);
                 this.aries2.GetComponent<TextMesh>().text = calcAries(day2);
@@ -448,13 +499,17 @@ namespace RealisticSkies
                     siderialTime = (float)hr + ((float)day * 24 + (float)hr) / (float)Patches.yearLen;
                 }
 
-                float longitude = (360 - Mathf.Atan2(D.y, D.x) * Mathf.Rad2Deg) + (siderialTime * 15.0f);
-                float Dec = Mathf.Asin(target.z / D.magnitude) * Mathf.Rad2Deg;
+                // planets are computed against the ecliptic; the table is against the equator
+                Vector3 equ = Celestial.EclipticToEquatorial(D);
+                float longitude = (360 - Mathf.Atan2(equ.y, equ.x) * Mathf.Rad2Deg) + (siderialTime * 15.0f);
+                float Dec = Mathf.Asin(equ.z / equ.magnitude) * Mathf.Rad2Deg;
 
                 AHA += degToDisp(longitude, false) + "\n";
                 DEC += degToDisp(Dec, false) + "\n";
 
-                float P = Vector3.Angle(-planetstruct.pos, -D);
+                // planetstruct.pos is never updated on the static Planet structs (they are copied by
+                // value), so use the position computed for this hour
+                float P = Vector3.Angle(-target, -D);
 
 
                 if (hr == 0)
@@ -473,7 +528,7 @@ namespace RealisticSkies
                         Q = -0.00037f * P + 0.000615f * P * P;
                     }
 
-                    float RD = D.magnitude * planetstruct.pos.magnitude * 0.68f * 0.68f;
+                    float RD = D.magnitude * target.magnitude * 0.68f * 0.68f;
                     float apparent = planetstruct.absBright + 5 * Mathf.Log(RD, 10.0f) + Q;
                     if (apparent > 0)
                     {
@@ -491,6 +546,352 @@ namespace RealisticSkies
 
 
 
+
+        private void BuildSunMoonPage()
+        {
+            Transform left = this.dayEntriesLeft.transform;
+            Transform right = this.dayEntriesRight.transform;
+
+            // right page is laid out like the left one, mirrored: Hr, then Sun and Moon columns,
+            // leaving the star list on the far right untouched
+            Transform sun = CloneColumns(left, right, "Planet2", "Sun Table", 0.15f);
+            Transform moon = CloneColumns(left, right, "Planet3", "Moon Table", 0.235f);
+            if (sun == null || moon == null)
+            {
+                Debug.LogWarning("RealisticSkies: almanac layout not as expected, Sun & Moon tables disabled");
+                return;
+            }
+
+            Transform hr = right.Find("Hr");
+            if (hr != null)
+            {
+                hr.gameObject.SetActive(true);
+            }
+
+            SetText(FindText(sun, "Name Text"), "Sun");
+            this.smSunAHA1 = FindText(sun, "AHA1");
+            this.smSunDEC1 = FindText(sun, "DEC1");
+            this.smSunAHA2 = FindText(sun, "AHA2");
+            this.smSunDEC2 = FindText(sun, "DEC2");
+            this.smSunNote = FindText(sun, "Mag Text");
+
+            SetText(FindText(moon, "Name Text"), "Moon");
+            this.smMoonAHA1 = FindText(moon, "AHA1");
+            this.smMoonDEC1 = FindText(moon, "DEC1");
+            this.smMoonAHA2 = FindText(moon, "AHA2");
+            this.smMoonDEC2 = FindText(moon, "DEC2");
+            this.smMoonNote = FindText(moon, "Mag Text");
+        }
+
+        private void NamePlanets()
+        {
+            // the four planet columns are Almanac planets 2, 3, 5 and 6
+            Transform left = this.dayEntriesLeft.transform;
+            SetText(FindText(left.Find("Planet2"), "Name Text"), PlanetNames.Get(2));
+            SetText(FindText(left.Find("Planet3"), "Name Text"), PlanetNames.Get(3));
+            SetText(FindText(left.Find("Planet5"), "Name Text"), PlanetNames.Get(5));
+            SetText(FindText(left.Find("Planet6"), "Name Text"), PlanetNames.Get(6));
+        }
+
+        private void NameStars()
+        {
+            // lore names in the Bright Stars list on the right page
+            TextMesh list = FindText(this.dayEntriesRight.transform, "Star Names");
+            if (list == null)
+            {
+                return;
+            }
+            string[] lines = list.text.Split('\n');
+            int longest = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string letter = lines[i].TrimEnd('\r');
+                if (letter.Length == 0) continue;
+                string shown = Lunar.DisplayNameWithLetter(letter);
+                if (shown != letter)
+                {
+                    lines[i] = shown + (lines[i].EndsWith("\r") ? "\r" : "");
+                }
+                longest = Math.Max(longest, shown.Length);
+            }
+            list.text = string.Join("\n", lines);
+            if (!Plugin.configStarNames.Value)
+            {
+                return;     // letters only: leave the vanilla layout alone
+            }
+            // pin the column by its right edge, so long names grow to the left (into the empty
+            // margin) instead of spilling over the SHA column; the alignment was right already
+            list.anchor = (TextAnchor)((int)list.anchor / 3 * 3 + 2);   // UpperX -> UpperRight, etc.
+            list.alignment = TextAlignment.Right;
+            // a touch smaller than the numbers, still well above the old shrunk size; very long names
+            // shrink further. The line spacing is scaled back by the same factor so rows stay level.
+            const float fitChars = 14f;
+            float k = 0.9f;
+            if (longest > fitChars)
+            {
+                k *= fitChars / longest;
+            }
+            list.characterSize *= k;
+            list.lineSpacing /= k;
+            PullNamesToSha(list);
+        }
+
+        /// <summary>
+        /// Pinned by the right edge, the names end where the old letter column was centred, a good
+        /// way left of the SHA column. Slide them right until they end just short of the widest SHA
+        /// value. SHA and DEC are children of the names text, so they are moved back by the same amount.
+        /// </summary>
+        private static void PullNamesToSha(TextMesh names)
+        {
+            try
+            {
+                Transform shaT = names.transform.Find("Star SHA");
+                TextMesh sha = shaT != null ? shaT.GetComponent<TextMesh>() : null;
+                if (sha == null) return;
+                float shaWidth = 0f;
+                foreach (string line in sha.text.Split('\n'))
+                {
+                    shaWidth = Math.Max(shaWidth, TextWidth(sha, line.TrimEnd('\r')));
+                }
+                float digit = TextWidth(sha, "0");
+                if (shaWidth <= 0f || digit <= 0f) return;
+                // the SHA block's left edge in the names' own space, from its anchor (left / centre / right)
+                float anchorFrac = ((int)sha.anchor % 3) * 0.5f;
+                float shaLeft = shaT.localPosition.x - anchorFrac * shaWidth * shaT.localScale.x;
+                float dx = shaLeft - NameGap * digit * shaT.localScale.x;
+                // only ever move right, and never onto the SHA column itself
+                if (dx <= 0f || dx >= shaLeft) return;
+                Transform t = names.transform;
+                t.localPosition += t.localRotation * new Vector3(dx * t.localScale.x, 0f, 0f);
+                foreach (Transform child in t)
+                {
+                    child.localPosition -= new Vector3(dx, 0f, 0f);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("RealisticSkies: could not line up the star names: " + e.Message);
+            }
+        }
+
+        /// <summary>Gap between a star's name and its SHA, in digit widths.</summary>
+        private const float NameGap = 1.6f;
+
+        /// <summary>Width of one line of a TextMesh in its own local units.</summary>
+        private static float TextWidth(TextMesh tm, string s)
+        {
+            Font f = tm.font;
+            if (f == null || string.IsNullOrEmpty(s)) return 0f;
+            int size = tm.fontSize > 0 ? tm.fontSize : f.fontSize;
+            f.RequestCharactersInTexture(s, size, tm.fontStyle);
+            float px = 0f;
+            foreach (char ch in s)
+            {
+                if (f.GetCharacterInfo(ch, out CharacterInfo ci, size, tm.fontStyle) || f.GetCharacterInfo(ch, out ci))
+                {
+                    px += ci.advance;
+                }
+            }
+            // a TextMesh draws 10 font pixels per local unit at Character Size 1
+            return px * 0.1f * tm.characterSize;
+        }
+
+        private void BuildLunarPage()
+        {
+            Transform parent = this.dayEntriesLeft.transform.parent;
+            Transform existing = parent.Find("Entries Lunar Left");
+            if (existing != null)
+            {
+                this.lunarLeft = existing.gameObject;
+            }
+            else
+            {
+                this.lunarLeft = UnityEngine.Object.Instantiate<GameObject>(this.dayEntriesLeft, parent);
+                this.lunarLeft.name = "Entries Lunar Left";
+            }
+            this.lunarLeft.SetActive(false);
+
+            Transform root = this.lunarLeft.transform;
+            this.lunarTitle = FindText(root, "Title");
+
+            // the Aries column becomes the Sun column
+            this.lunarSun1 = FindText(root, "Aries AHA1");
+            this.lunarSun2 = FindText(root, "Aries AHA2");
+            this.lunarSunHeader = FindText(root, "AHA Text");
+            this.lunarSunHeaderTemplate = this.lunarSunHeader != null ? this.lunarSunHeader.text : "";
+
+            // each planet group holds two stars: AHA columns for the first, DEC columns for the second
+            string[] groups = { "Planet2", "Planet3", "Planet5", "Planet6" };
+            for (int g = 0; g < groups.Length; g++)
+            {
+                Transform group = root.Find(groups[g]);
+                if (group == null)
+                {
+                    Debug.LogWarning("RealisticSkies: almanac layout not as expected, lunar distance page disabled");
+                    UnityEngine.Object.Destroy(this.lunarLeft);
+                    this.lunarLeft = null;
+                    return;
+                }
+                SetText(FindText(group, "Name Text"), "");
+                SetText(FindText(group, "Mag Text"), "");
+
+                this.lunarCol1[2 * g] = FindText(group, "AHA1");
+                this.lunarCol2[2 * g] = FindText(group, "AHA2");
+                this.lunarHeader[2 * g] = FindText(group, "AHA Text");
+
+                this.lunarCol1[2 * g + 1] = FindText(group, "DEC1");
+                this.lunarCol2[2 * g + 1] = FindText(group, "DEC2");
+                this.lunarHeader[2 * g + 1] = FindText(group, "DEC Text");
+            }
+            for (int i = 0; i < 8; i++)
+            {
+                this.lunarHeaderTemplate[i] = this.lunarHeader[i] != null ? this.lunarHeader[i].text : "";
+            }
+        }
+
+        private void FillLunarPage(int day1, int day2)
+        {
+            SetText(this.lunarTitle, $"Days {day1} and {day2} AT  Lunar Distances");
+
+            SetText(this.lunarSunHeader, this.lunarSunHeaderTemplate.Replace("Aries", "Sun").Replace("AHA", "Dist"));
+            SetText(this.lunarSun1, DistanceColumn(Lunar.SunIndex, day1));
+            SetText(this.lunarSun2, DistanceColumn(Lunar.SunIndex, day2));
+
+            // the brightest stars the moon is well placed for on these two days
+            List<int> stars = Lunar.TableStars(day1, 8, new List<int>());
+
+            for (int i = 0; i < 8; i++)
+            {
+                if (i < stars.Count)
+                {
+                    string name = Lunar.Name(stars[i]);
+                    SetText(this.lunarHeader[i], this.lunarHeaderTemplate[i].Replace("AHA", name).Replace("DEC", name));
+                    SetText(this.lunarCol1[i], DistanceColumn(stars[i], day1));
+                    SetText(this.lunarCol2[i], DistanceColumn(stars[i], day2));
+                }
+                else
+                {
+                    SetText(this.lunarHeader[i], "");
+                    SetText(this.lunarCol1[i], "");
+                    SetText(this.lunarCol2[i], "");
+                }
+            }
+        }
+
+        private static string DistanceColumn(int body, int day)
+        {
+            string val = "\n";
+            for (int hr = 0; hr < 24; hr++)
+            {
+                val += Celestial.Format(Lunar.Distance(body, day, hr)) + "\n";
+            }
+            return val;
+        }
+
+        private static Transform CloneColumns(Transform fromPage, Transform toPage, string source, string name, float x)
+        {
+            Transform existing = toPage.Find(name);
+            if (existing != null)
+            {
+                return existing;
+            }
+            Transform src = fromPage.Find(source);
+            if (src == null)
+            {
+                return null;
+            }
+            GameObject copy = UnityEngine.Object.Instantiate<GameObject>(src.gameObject, toPage);
+            copy.name = name;
+            copy.transform.localPosition = new Vector3(x, src.localPosition.y, src.localPosition.z);
+            copy.transform.localRotation = src.localRotation;
+            copy.transform.localScale = src.localScale;
+            copy.SetActive(true);
+            return copy.transform;
+        }
+
+        private void FillSunMoon(int day1, int day2)
+        {
+            SetText(this.smSunAHA1, SunColumn(day1, true));
+            SetText(this.smSunDEC1, SunColumn(day1, false));
+            SetText(this.smSunAHA2, SunColumn(day2, true));
+            SetText(this.smSunDEC2, SunColumn(day2, false));
+            SetText(this.smSunNote, "");
+
+            if (Celestial.MoonReworkActive)
+            {
+                SetText(this.smMoonAHA1, MoonColumn(day1, true));
+                SetText(this.smMoonDEC1, MoonColumn(day1, false));
+                SetText(this.smMoonAHA2, MoonColumn(day2, true));
+                SetText(this.smMoonDEC2, MoonColumn(day2, false));
+
+                // illuminated fraction at noon of each day
+                double ill1 = Celestial.MoonIllumination(day1 + 0.5) * 100.0;
+                double ill2 = Celestial.MoonIllumination(day2 + 0.5) * 100.0;
+                SetText(this.smMoonNote, $"Lit {ill1:F0}% {ill2:F0}%");
+            }
+            else
+            {
+                string empty = "\n";
+                for (int hr = 0; hr < 24; hr++)
+                {
+                    empty += "  --\n";
+                }
+                SetText(this.smMoonAHA1, empty);
+                SetText(this.smMoonDEC1, empty);
+                SetText(this.smMoonAHA2, empty);
+                SetText(this.smMoonDEC2, empty);
+                SetText(this.smMoonNote, "");
+            }
+        }
+
+        private static string SunColumn(int day, bool aha)
+        {
+            string val = "\n";
+            for (int hr = 0; hr < 24; hr++)
+            {
+                double t = day + hr / 24.0;
+                val += Celestial.Format(aha ? Celestial.SunGHA(t, hr) : Celestial.SunDec(t)) + "\n";
+            }
+            return val;
+        }
+
+        private static string MoonColumn(int day, bool aha)
+        {
+            string val = "\n";
+            for (int hr = 0; hr < 24; hr++)
+            {
+                double t = day + hr / 24.0;
+                val += Celestial.Format(aha ? Celestial.MoonGHA(t, hr) : Celestial.MoonDec(t)) + "\n";
+            }
+            return val;
+        }
+
+        private static TextMesh FindText(Transform parent, string name)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+            Transform child = parent.Find(name);
+            return child != null ? child.GetComponent<TextMesh>() : null;
+        }
+
+        private static void SetText(TextMesh mesh, string text)
+        {
+            if (mesh != null)
+            {
+                mesh.text = text;
+            }
+        }
+
+        private static void Hide(Transform parent, string name)
+        {
+            Transform child = parent.Find(name);
+            if (child != null)
+            {
+                child.gameObject.SetActive(false);
+            }
+        }
 
         //Awful display formatting code
         private string degToDisp(float val, bool flag)

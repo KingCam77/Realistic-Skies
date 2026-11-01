@@ -19,7 +19,9 @@ namespace RealisticSkies
             int parentIslandIndex = __instance.gameObject.GetComponent<IslandSceneryScene>().parentIslandIndex;
             if (Patches.shopKeepers.ContainsKey(parentIslandIndex))
             {
-                UnityEngine.Object.Instantiate<ShopInfo>(Patches.shopKeepers[parentIslandIndex], __instance.transform).shopPrefab.transform.parent = __instance.transform;
+                ShopInfo info = UnityEngine.Object.Instantiate<ShopInfo>(Patches.shopKeepers[parentIslandIndex], __instance.transform);
+                info.shopPrefab.transform.parent = __instance.transform;
+                ModItemLoreScroll.AddToShop(info.shopPrefab.transform, parentIslandIndex);
             }
         }
 

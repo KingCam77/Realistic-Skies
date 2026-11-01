@@ -10,7 +10,7 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace RealisticSkies
 {
-    public class ModItemQuintant : ShipItem
+    public class ModItemQuintant : ShipItemHangable
     {
         private Transform dial;
 
@@ -140,6 +140,15 @@ namespace RealisticSkies
 
         static bool constructed;
 
+        // lunar distance mode: click a star / the sun, then click the moon
+        private bool lunarMode;
+
+        private const int NoLock = int.MinValue;
+
+        private int lunarLock = NoLock;
+
+        private const float LunarSnap = 3f; // degrees: how close the crosshair has to be to a body
+
         private ModItemQuintant()
         {
             if (!constructed)
@@ -230,8 +239,19 @@ namespace RealisticSkies
             this.takeReading(false);
         }
 
+        public override bool AllowOnItemClick(GoPointerButton lookedAtButton)
+        {
+            // can be hung on lamp hooks
+            return lookedAtButton.GetComponent<ShipItemLampHook>() != null || (!base.big && lookedAtButton.allowPlacingItems);
+        }
+
         public override void OnAltActivate()
         {
+            if (sold && lunarMode && !inspecting && !rotating)
+            {
+                this.LunarClick();
+                return;
+            }
             if (!sold)
             {
                 base.OnAltActivate();
@@ -335,8 +355,10 @@ namespace RealisticSkies
                 float min = Mathf.Floor((this.gameTime - hour) * 60);
                 float sec = Mathf.Floor((this.gameTime - hour - min / 60) * 60 * 60);
 
-                var deg = Mathf.Floor(this.dial.localEulerAngles.x);
-                var arcMin = Math.Round((this.dial.localEulerAngles.x - Mathf.Floor(this.dial.localEulerAngles.x)) * 60, 1);
+                // round the whole angle to 0.1' first so 12°59.97' shows as 13°00.0', not 12°60.0'
+                double totalMin = Math.Round(this.dial.localEulerAngles.x * 60.0, 1);
+                var deg = Math.Floor(totalMin / 60.0);
+                var arcMin = (totalMin - deg * 60.0).ToString("0.0");
 
                 if (Plugin.configQuintantHelp.Value == "Full")
                 {
@@ -630,8 +652,106 @@ namespace RealisticSkies
             obj.localPosition = targetPos;
         }
 
+        private static void Notify(string text)
+        {
+            if (NotificationUi.instance != null)
+            {
+                NotificationUi.instance.ShowNotification(text, 5f);
+            }
+        }
+
+        private void ToggleLunarMode()
+        {
+            if (!lunarMode && !Celestial.MoonReworkActive)
+            {
+                Notify("Lunar distances need \"Moon Orbit Rework\" turned on");
+                return;
+            }
+            lunarMode = !lunarMode;
+            lunarLock = NoLock;
+            UISoundPlayer.instance.PlayOpenSound();
+            Notify(lunarMode
+                ? "Quintant: lunar distance\nclick a star or the Sun, then the Moon"
+                : "Quintant: altitude");
+        }
+
+        private void LunarClick()
+        {
+            if (!Celestial.HaveSkyAxes || Sun.sun == null || Moon.instance == null || Moon.instance.transform.parent == null)
+            {
+                return;
+            }
+
+            Vector3 aim = this.ocularCam != null ? this.ocularCam.transform.forward : Camera.main.transform.forward;
+            int day = GameState.day;
+            double hour = Sun.sun.globalTime;
+
+            Vector3 moonDir = (Moon.instance.transform.position - Moon.instance.transform.parent.position).normalized;
+            float moonAngle = Vector3.Angle(aim, moonDir);
+
+            if (moonAngle < LunarSnap && lunarLock != NoLock)
+            {
+                double dist = Lunar.Distance(lunarLock, day, hour);
+                UISoundPlayer.instance.PlayOpenSound();
+                Notify($"{Lunar.Name(lunarLock)} to Moon:{Celestial.Format(dist)}'");
+                return;
+            }
+
+            // nearest star from the Almanac catalogue, or the sun
+            int best = NoLock;
+            float bestAngle = LunarSnap;
+
+            Vector3 sunDir = -Sun.sun.transform.parent.forward;
+            if (sunDir.y > 0f && Vector3.Angle(aim, sunDir) < bestAngle)
+            {
+                best = Lunar.SunIndex;
+                bestAngle = Vector3.Angle(aim, sunDir);
+            }
+            for (int i = 0; i < Lunar.Stars.Count; i++)
+            {
+                Lunar.BodyGHADec(i, day, hour, out double gha, out double dec);
+                Vector3 dir = Lunar.WorldDirection(gha, dec, hour);
+                if (dir.y <= 0f)
+                {
+                    continue;
+                }
+                float a = Vector3.Angle(aim, dir);
+                if (a < bestAngle)
+                {
+                    best = i;
+                    bestAngle = a;
+                }
+            }
+
+            if (best != NoLock)
+            {
+                lunarLock = best;
+                UISoundPlayer.instance.PlayOpenSound();
+                Notify($"Locked on {Lunar.Name(best)}\nnow click the Moon");
+            }
+            else if (moonAngle < LunarSnap)
+            {
+                Notify("Click a star or the Sun first");
+            }
+            else
+            {
+                Notify("No star near the crosshair");
+            }
+        }
+
         public override void ExtraLateUpdate()
         {
+            if (held && Plugin.configLunarKey.Value.IsDown())
+            {
+                this.ToggleLunarMode();
+            }
+
+            // without the built-in clock the time has to come from a chronometer or lunar distances
+            if (!Plugin.configQuintantClock.Value && this.clock != null && this.clock.activeSelf)
+            {
+                this.clock.SetActive(false);
+            }
+
             if (!inspecting && held)
             {
                 if (Sun.sun.localTime > 18f || Sun.sun.localTime < 6f)
@@ -695,12 +815,12 @@ namespace RealisticSkies
         }
 
 
+        private static readonly FieldInfo finalParticlesInfo = AccessTools.Field(typeof(Weather), "finalParticles");
+
         private int DetectWeather()
         {   //returns the shade level needed for the current cloudiness (0: all shades closed, 3: no shades closed)
 
             //use reflection to get the cloud density, no other way to get that value!
-            //DEBUG: The FieldInfo should be cached in OnLoad(), no need to do it everytime here...
-            FieldInfo finalParticlesInfo = AccessTools.Field(typeof(Weather), "finalParticles");
             WeatherParticlesSettings finalParticles = (WeatherParticlesSettings)finalParticlesInfo.GetValue(Weather.instance);
             float cloudsDensity = finalParticles.cloudDensity;
             //Debug.LogWarning("Debug: cloudDensity: " + cloudsDensity);  //DEBUG: this is going to be needed to find the values to tweak this stuff

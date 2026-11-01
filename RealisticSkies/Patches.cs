@@ -37,6 +37,17 @@ namespace RealisticSkies
                 {
                     Debug.LogWarning("RealisticSkies: unable to refresh shader: " + shaderName + " in material " + m.name);
                 }
+
+                // star chart and atlas pages have to draw in the same queue as the sky items,
+                // otherwise they come out washed out and blurry
+                if (m.name == "map item stars" || m.name == "scroll page")
+                {
+                    m.renderQueue = 2800;
+                }
+                if (m.name == "map item stars" && Plugin.configConstellationChart.Value)
+                {
+                    ReplaceChartTexture(m);
+                }
             }
 
             foreach (GameObject gameObject in Patches.assets.LoadAllAssets<GameObject>())
@@ -65,6 +76,12 @@ namespace RealisticSkies
                         gameObject.AddComponent<ModItemPlanisphere>();
                         Debug.Log($"RealisticSkies: replaced planisphere ship item");
                     }
+                    if (saveable.prefabIndex == 706 && gameObject.GetComponent<ShipItem>() is ShipItem)
+                    {
+                        Destroy(gameObject.GetComponent<ShipItem>());
+                        gameObject.AddComponent<ModItemCharts>();
+                        Debug.Log($"RealisticSkies: replaced Charts ship item");
+                    }
                 } 
                 else
                 {
@@ -90,6 +107,43 @@ namespace RealisticSkies
         }
 
         public static AssetBundle assets;
+
+        /// <summary>
+        /// Swap the Star Chart's polar chart for the version with the constellation figures: the
+        /// StarChart.png built into the DLL, or a loose StarChart.png next to the plugin if there is one.
+        /// </summary>
+        private static void ReplaceChartTexture(Material m)
+        {
+            try
+            {
+                byte[] data = ModResources.Read("StarChart.png", out string file);
+                if (data == null)
+                {
+                    Debug.LogWarning("RealisticSkies: no StarChart.png, keeping the original star chart");
+                    return;
+                }
+                var tex = new Texture2D(2, 2, TextureFormat.RGB24, true);
+                if (!ImageConversion.LoadImage(tex, data))
+                {
+                    Debug.LogWarning("RealisticSkies: could not read " + file + ", keeping the original star chart");
+                    return;
+                }
+                tex.name = "StarChart (constellations)";
+                tex.anisoLevel = 4;
+                Texture old = m.mainTexture;
+                if (old != null)
+                {
+                    tex.wrapMode = old.wrapMode;
+                    tex.filterMode = old.filterMode;
+                }
+                m.mainTexture = tex;
+                Debug.Log($"RealisticSkies: star chart texture {(old != null ? old.name : "none")} replaced with {file} ({tex.width}x{tex.height})");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("RealisticSkies: could not replace the star chart: " + e.Message);
+            }
+        }
 
         public static Material starMat;
 
@@ -124,6 +178,7 @@ namespace RealisticSkies
                         Debug.LogWarning(string.Format("RealisticSkies: Prefab at index {0} already exists in directory, skipping {1}", keyValuePair.Key, keyValuePair.Value.name));
                     }
                 }
+                ModItemLoreScroll.Register(PrefabsDirectory.instance);
             }
         }
 
@@ -156,6 +211,11 @@ namespace RealisticSkies
                     {
                         PlanetPatch.StartPlanetsPatch();
                     }
+
+                    if (Patches.Zenv.GetComponent<StarLabels>() == null)
+                    {
+                        Patches.Zenv.AddComponent<StarLabels>();
+                    }
                 }
             }
 
@@ -174,6 +234,7 @@ namespace RealisticSkies
                 if (!Plugin.configDisable.Value)
                 {
                     SkyboxManager.UpdateSkybox();
+                    EclipticTilt.Apply();
 
                     StarPatch.UpdateStarPatch();
                     MoonPatch.UpdateMoonPatch();

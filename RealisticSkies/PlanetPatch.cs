@@ -123,13 +123,23 @@ namespace RealisticSkies
         {
             // This is all in the ecliptic plane, which is currently the same as the equatorial plane
 
-            float ecc2 = planetstruct.ecc * planetstruct.ecc;
+            float e = planetstruct.ecc;
 
-            float Ma = planetstruct.n * (year + planetstruct.tau);
-            // first order approximation of true anomaly
-            float v = Ma + (2f * planetstruct.ecc - 0.25f * ecc2) * Mathf.Sin(Ma);
+            // mean anomaly, wrapped so float precision holds up over long games
+            float Ma = Mathf.Repeat(planetstruct.n * (year + planetstruct.tau), 2f * Mathf.PI);
 
-            float r = (planetstruct.a * (1 - ecc2)) / (1 + planetstruct.ecc * Mathf.Cos(v));
+            // solve Kepler's equation M = E - e sin E (Newton). The old series
+            // M + (2e - e^2/4) sin M had the wrong second order term and was off by up to ~6 deg
+            // for the innermost planet.
+            float E = Ma + e * Mathf.Sin(Ma);
+            for (int k = 0; k < 5; k++)
+            {
+                E -= (E - e * Mathf.Sin(E) - Ma) / (1f - e * Mathf.Cos(E));
+            }
+
+            float v = 2f * Mathf.Atan2(Mathf.Sqrt(1f + e) * Mathf.Sin(E / 2f), Mathf.Sqrt(1f - e) * Mathf.Cos(E / 2f));
+
+            float r = planetstruct.a * (1f - e * Mathf.Cos(E));
 
             // Trig stuff
             float Co = Mathf.Cos(planetstruct.Omega);
