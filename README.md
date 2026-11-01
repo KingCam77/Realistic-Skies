@@ -6,6 +6,8 @@ A fork of KingCam77's Realistic Skies, made with his permission. You can navigat
 
 <img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
 
+<img width="1954" height="1439" alt="image" src="https://github.com/user-attachments/assets/930bc8fe-6989-4ee3-bd75-a896cd2bf87a" />
+
 
 ## Navigating by the sun and the moon
 - **Sun and Moon tables in the Almanac.** Every page now lists the sun's and the moon's hour angle (AHA) and declination for every hour, next to the bright stars, and how much of the moon is lit. Use them like the planet columns.
