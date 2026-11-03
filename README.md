@@ -6,8 +6,6 @@ A complete overhaul of the skies in Sailwind adding more depth, realism, and int
 
 <img width="2344" height="1439" alt="image" src="https://github.com/user-attachments/assets/03c9f2bc-2c1d-4061-bfab-828deabe0dd1" />
 
-<img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
-
 <img width="1954" height="1439" alt="image" src="https://github.com/user-attachments/assets/930bc8fe-6989-4ee3-bd75-a896cd2bf87a" />
 
 ## Tutorial
@@ -15,6 +13,9 @@ This video walks through how to use the instruments and obtaining a fix from the
 https://www.youtube.com/watch?v=06BABS5Zv-U
 
 ## Getting started
+
+<img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
+
 Everything is sold in the three capitals, on the stall with the Star Map. To learn how to use it all, buy **The Navigator's Companion**, and outside the Magellan difficulty also **The Modern Navigator**. These two illustrated scrolls teach every instrument step by step, in game. This page is the quick reference.
 
 Navigation comes down to two things:
