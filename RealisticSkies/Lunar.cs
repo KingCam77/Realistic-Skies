@@ -133,6 +133,46 @@ namespace RealisticSkies
             return Angle(gha, dec, Celestial.MoonGHA(t, hour), Celestial.MoonDec(t));
         }
 
+        private static double moonSD = double.NaN;
+
+        /// <summary>
+        /// The moon's semi-diameter in degrees: its angular radius as seen in the game. The game's
+        /// moon hangs at a fixed distance, so it doesn't change (the phase only changes what is lit).
+        /// Measured once off the moon's own mesh; NaN until the moon exists.
+        /// </summary>
+        public static double MoonSemiDiameter
+        {
+            get
+            {
+                if (!double.IsNaN(moonSD) || Moon.instance == null) return moonSD;
+                MeshFilter mf = Moon.instance.GetComponent<MeshFilter>();
+                Camera cam = Camera.main;
+                if (cam == null) return moonSD;
+                float radius;
+                if (mf != null && mf.sharedMesh != null)
+                {
+                    Vector3 e = mf.sharedMesh.bounds.extents;
+                    Vector3 sc = Moon.instance.transform.lossyScale;
+                    radius = Mathf.Max(e.x * Mathf.Abs(sc.x), e.y * Mathf.Abs(sc.y));
+                }
+                else
+                {
+                    Renderer rd = Moon.instance.GetComponent<Renderer>();
+                    if (rd == null) return moonSD;
+                    radius = Mathf.Min(rd.bounds.extents.x, Mathf.Min(rd.bounds.extents.y, rd.bounds.extents.z));
+                    if (radius <= 0f) radius = Mathf.Max(rd.bounds.extents.x, rd.bounds.extents.y);
+                }
+                float dist = Vector3.Distance(Moon.instance.transform.position, cam.transform.position);
+                if (dist <= 0f || radius <= 0f) return moonSD;
+                moonSD = Math.Atan(radius / dist) * Mathf.Rad2Deg;
+                Debug.Log("RealisticSkies: the moon's semi-diameter is " + Celestial.Format(moonSD) + "'");
+                return moonSD;
+            }
+        }
+
+        /// <summary>Forget the measured semi-diameter (the moon was resized).</summary>
+        public static void ResetMoonSemiDiameter() => moonSD = double.NaN;
+
         public static double Angle(double gha1, double dec1, double gha2, double dec2)
         {
             double d1 = dec1 * Mathf.Deg2Rad, d2 = dec2 * Mathf.Deg2Rad;

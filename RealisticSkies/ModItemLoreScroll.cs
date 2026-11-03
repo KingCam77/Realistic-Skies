@@ -16,6 +16,11 @@ namespace RealisticSkies
     public class ModItemLoreScroll : ShipItem
     {
         public const int PrefabIndex = 704;
+        public const int CompanionIndex = 715, ModernIndex = 716;
+
+        /// <summary>Which pages: "Lore" (Sea Legends), "Companion" (the old instruments), "Modern" (the quintant and the clocks).</summary>
+        public string book = "Lore";
+        private LorePages Pages => LorePages.For(book);
         private const int SourceIndex = 91;
         private const string ItemName = "Sea Legends";
 
@@ -38,7 +43,7 @@ namespace RealisticSkies
             {
                 this.closedMesh = this.filter.sharedMesh;
             }
-            base.name = ItemName;
+            base.name = Pages.Title;
             this.currentPage = Mathf.Clamp((int)base.amount, 0, Math.Max(0, PageCount - 1));
             this.ShowPage();
             if (this.page != null) this.page.enabled = false;
@@ -127,15 +132,15 @@ namespace RealisticSkies
 
         private void ShowPage()
         {
-            Texture2D tex = LorePages.Get(this.currentPage);
+            Texture2D tex = Pages.Get(this.currentPage);
             this.pageWaiting = tex == null && this.currentPage < PageCount;
             if (tex != null && this.page != null && this.page.material.mainTexture != tex)
             {
                 this.page.material.mainTexture = tex;
             }
             // fetch the neighbours ahead, so the next flip is instant
-            LorePages.Request(this.currentPage + 1);
-            LorePages.Request(this.currentPage - 1);
+            Pages.Request(this.currentPage + 1);
+            Pages.Request(this.currentPage - 1);
         }
 
         private void UpdateArrows()
@@ -152,35 +157,46 @@ namespace RealisticSkies
 
         // ---------------- pages ----------------
 
-        private static int PageCount => LorePages.Count;
+        private int PageCount => Pages.Count;
 
         // ---------------- prefab ----------------
 
         private static GameObject holder;
         private static GameObject prefab;
 
-        /// <summary>Builds prefab 704 from the vanilla scroll and puts it in the prefab directory.</summary>
+        /// <summary>Builds the scrolls (Sea Legends 704, the two navigators' books 715 and 716) from the vanilla scroll.</summary>
         internal static void Register(PrefabsDirectory dir)
         {
             if (prefab != null || dir == null || dir.directory == null) return;
+            prefab = Build(dir, PrefabIndex, "Lore", 1.1f);
+            Build(dir, CompanionIndex, "Companion", 0.6f);
+            Build(dir, ModernIndex, "Modern", 0.8f);
+        }
+
+        private static GameObject Build(PrefabsDirectory dir, int index, string book, float ofChart)
+        {
+            string title = LorePages.For(book).Title;
             if (dir.directory.Length <= SourceIndex || dir.directory[SourceIndex] == null)
             {
-                Debug.LogWarning("RealisticSkies: vanilla scroll (prefab 91) not found, no Sea Legends scroll");
-                return;
+                Debug.LogWarning("RealisticSkies: vanilla scroll (prefab 91) not found, no " + title);
+                return null;
             }
-            if (dir.directory.Length > PrefabIndex && dir.directory[PrefabIndex] != null)
+            if (dir.directory.Length > index && dir.directory[index] != null)
             {
-                Debug.LogWarning("RealisticSkies: prefab 704 is already taken, no Sea Legends scroll");
-                return;
+                Debug.LogWarning("RealisticSkies: prefab " + index + " is already taken, no " + title);
+                return null;
             }
             try
             {
                 // an inactive parent keeps the template from waking up; copies made from it are active
-                holder = new GameObject("RealisticSkies prefab holder");
-                holder.SetActive(false);
-                UnityEngine.Object.DontDestroyOnLoad(holder);
+                if (holder == null)
+                {
+                    holder = new GameObject("RealisticSkies prefab holder");
+                    holder.SetActive(false);
+                    UnityEngine.Object.DontDestroyOnLoad(holder);
+                }
                 GameObject go = UnityEngine.Object.Instantiate(dir.directory[SourceIndex], holder.transform);
-                go.name = "704 sea legends";
+                go.name = index + " " + title.ToLowerInvariant();
 
                 ShipItemScroll old = go.GetComponent<ShipItemScroll>();
                 ModItemLoreScroll item = go.AddComponent<ModItemLoreScroll>();
@@ -190,33 +206,33 @@ namespace RealisticSkies
                 item.arrowDown = (GameObject)AccessTools.Field(typeof(ShipItemScroll), "arrowDown").GetValue(old);
                 item.openMesh = (Mesh)AccessTools.Field(typeof(ShipItemScroll), "openMesh").GetValue(old);
                 UnityEngine.Object.DestroyImmediate(old);
-                item.name = ItemName;
-                // a little dearer than the Star Chart (more paper, and the pictures), about 280 crowns
-                item.value = 250;
+                item.book = book;
+                item.name = title;
+                item.value = Mathf.RoundToInt(250 * ofChart / 1.1f);
                 if (Patches.itemPrefabs.TryGetValue(703, out GameObject chart) && chart != null
                     && chart.GetComponent<ShipItem>() is ShipItem chartItem && chartItem.value > 0)
                 {
-                    item.value = Mathf.RoundToInt(chartItem.value * 1.1f);
+                    item.value = Mathf.RoundToInt(chartItem.value * ofChart);
                 }
                 item.amount = 0f;
 
-                go.GetComponent<SaveablePrefab>().prefabIndex = PrefabIndex;
-
-                if (dir.directory.Length <= PrefabIndex)
+                go.GetComponent<SaveablePrefab>().prefabIndex = index;
+                if (dir.directory.Length <= index)
                 {
-                    Array.Resize(ref dir.directory, PrefabIndex + 5);
+                    Array.Resize(ref dir.directory, index + 5);
                 }
-                dir.directory[PrefabIndex] = go;
-                prefab = go;
-                Debug.Log("RealisticSkies: added the Sea Legends scroll as prefab 704");
+                dir.directory[index] = go;
+                Debug.Log("RealisticSkies: added " + title + " as prefab " + index);
+                return go;
             }
             catch (Exception e)
             {
-                Debug.LogWarning("RealisticSkies: could not build the Sea Legends scroll: " + e);
+                Debug.LogWarning("RealisticSkies: could not build " + title + ": " + e);
+                return null;
             }
         }
 
-        private static void CopyShipItemFields(ShipItem from, ShipItem to)
+        internal static void CopyShipItemFields(ShipItem from, ShipItem to)
         {
             for (Type t = typeof(ShipItem); t != null && t != typeof(MonoBehaviour); t = t.BaseType)
             {
@@ -231,12 +247,19 @@ namespace RealisticSkies
 
         /// <summary>
         /// Puts the scroll in one of the mod's shops: on its own spot if one is set for this island
-        /// (see <see cref="LoreShopSpots"/>), else on the stall next to the Star Chart.
+        /// (see <see cref="ShopSpots"/>), else on the stall next to the Star Chart.
         /// </summary>
         internal static void AddToShop(Transform shop, int island)
         {
+            AddToShop(shop, island, ShopSpots.Scroll, PrefabIndex, new Vector3(-0.4f, 0.02f, 0f));
+            AddToShop(shop, island, ShopSpots.Companion, CompanionIndex, new Vector3(-0.4f, 0.02f, 0.22f));
+            AddToShop(shop, island, ShopSpots.Modern, ModernIndex, new Vector3(-0.4f, 0.02f, -0.22f));
+        }
+
+        private static void AddToShop(Transform shop, int island, string kind, int index, Vector3 offset)
+        {
             if (shop == null) return;
-            bool hasSpot = LoreShopSpots.TryGet(island, out LoreShopSpots.Spot spot);
+            bool hasSpot = ShopSpots.TryGet(kind, island, out ShopSpots.Spot spot);
             ShopItemSpawner source = null;
             foreach (ShopItemSpawner sp in shop.GetComponentsInChildren<ShopItemSpawner>(true))
             {
@@ -247,14 +270,14 @@ namespace RealisticSkies
             if (source == null) return;
 
             GameObject clone = UnityEngine.Object.Instantiate(source.gameObject, source.transform.parent);
-            clone.name = "sea legends";
+            clone.name = kind;
             if (hasSpot)
             {
-                LoreShopSpots.Apply(clone.transform, shop, spot);
+                ShopSpots.Apply(clone.transform, shop, spot);
             }
             else
             {
-                clone.transform.localPosition = source.transform.localPosition + new Vector3(-0.4f, 0.02f, 0f);
+                clone.transform.localPosition = source.transform.localPosition + offset;
                 clone.transform.rotation = shop.rotation * Quaternion.Euler(-90f, 0f, 0f);
             }
             ShopItemSpawner csp = clone.GetComponent<ShopItemSpawner>();
@@ -262,22 +285,26 @@ namespace RealisticSkies
             csp.enabled = false;
             Renderer r = clone.GetComponent<Renderer>();
             if (r != null) r.enabled = false;
-            clone.AddComponent<LoreSpawnerHook>().spawner = csp;
+            var hook = clone.AddComponent<LoreSpawnerHook>();
+            hook.spawner = csp;
+            hook.prefabIndex = index;
+            ShopSpots.RegisterSpawner(kind, island, clone.transform);
         }
     }
 
-    /// <summary>Hands the shop spawner the scroll prefab once the prefab directory has it.</summary>
+    /// <summary>Hands the shop spawner its prefab (the scroll, the hourglass) once the prefab directory has it.</summary>
     public class LoreSpawnerHook : MonoBehaviour
     {
         public ShopItemSpawner spawner;
+        public int prefabIndex = ModItemLoreScroll.PrefabIndex;
 
         private void Update()
         {
             PrefabsDirectory dir = PrefabsDirectory.instance;
             if (spawner == null || dir == null || dir.directory == null) return;
-            if (dir.directory.Length > ModItemLoreScroll.PrefabIndex && dir.directory[ModItemLoreScroll.PrefabIndex] != null)
+            if (dir.directory.Length > prefabIndex && dir.directory[prefabIndex] != null)
             {
-                spawner.itemPrefab = dir.directory[ModItemLoreScroll.PrefabIndex];
+                spawner.itemPrefab = dir.directory[prefabIndex];
                 spawner.enabled = true;
                 Destroy(this);
             }

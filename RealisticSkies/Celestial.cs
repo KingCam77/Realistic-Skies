@@ -37,7 +37,7 @@ namespace RealisticSkies
 
         public static bool SunReworkActive =>
             !Plugin.configDisable.Value &&
-            (Plugin.configAxialTilt.Value != 0f || Plugin.configEquationOfTime.Value);
+            (Mode.AxialTilt != 0f || Mode.EquationOfTime);
 
         /// <summary>GHA of the vanilla clock sun.</summary>
         public static double MeanSunGHA(double hour) => Repeat(15.0 * (hour - 12.0), 360.0);
@@ -47,9 +47,9 @@ namespace RealisticSkies
         public static double SunDec(double t)
         {
             if (Plugin.configDisable.Value) return 0.0;
-            double eps = Plugin.configAxialTilt.Value * Mathf.Deg2Rad;
+            double eps = Mode.AxialTilt * Mathf.Deg2Rad;
             if (eps == 0.0) return 0.0;
-            double lambda = (Plugin.configEquationOfTime.Value ? SunLongitudeTrue(t) : SunLongitudeMean(t)) * Mathf.Deg2Rad;
+            double lambda = (Mode.EquationOfTime ? SunLongitudeTrue(t) : SunLongitudeMean(t)) * Mathf.Deg2Rad;
             return Math.Asin(Math.Sin(eps) * Math.Sin(lambda)) * Mathf.Rad2Deg;
         }
 
@@ -59,8 +59,8 @@ namespace RealisticSkies
         /// </summary>
         public static double EquationOfTime(double t)
         {
-            if (Plugin.configDisable.Value || !Plugin.configEquationOfTime.Value) return 0.0;
-            double eps = Plugin.configAxialTilt.Value * Mathf.Deg2Rad;
+            if (Plugin.configDisable.Value || !Mode.EquationOfTime) return 0.0;
+            double eps = Mode.AxialTilt * Mathf.Deg2Rad;
             double lambda = SunLongitudeTrue(t) * Mathf.Deg2Rad;
             double ra = Math.Atan2(Math.Cos(eps) * Math.Sin(lambda), Math.Cos(lambda)) * Mathf.Rad2Deg;
             double e = SunLongitudeMean(t) - ra;
@@ -154,7 +154,7 @@ namespace RealisticSkies
         /// </summary>
         public static Vector3 EclipticToEquatorial(Vector3 v)
         {
-            float eps = Plugin.configDisable.Value ? 0f : Plugin.configAxialTilt.Value * Mathf.Deg2Rad;
+            float eps = Plugin.configDisable.Value ? 0f : Mode.AxialTilt * Mathf.Deg2Rad;
             float c = Mathf.Cos(eps), s = Mathf.Sin(eps);
             return new Vector3(v.x, v.y * c - v.z * s, v.y * s + v.z * c);
         }

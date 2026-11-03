@@ -12,10 +12,20 @@ namespace RealisticSkies
     /// ImageConversion.LoadImage and then DXT-compressed on the main thread, which took the better
     /// part of a second per page. Now the PNG is decoded and its mip chain built on a worker thread;
     /// the main thread only uploads the finished pixels. The pages next to the one being read are
-    /// fetched ahead, so turning a page is normally instant.
+    /// fetched ahead, so turning a page is normally instant. With the mod's asset bundle installed the
+    /// pages come from it instead, already compressed, loaded asynchronously.
     /// </summary>
-    internal static class LorePages
+    internal class LorePages
     {
+        internal static readonly LorePages Legends = new LorePages("Lore", "Sea Legends");
+        internal static readonly LorePages Companion = new LorePages("Companion", "The Navigator's Companion");
+        internal static readonly LorePages Modern = new LorePages("Modern", "The Modern Navigator");
+
+        internal static LorePages For(string book) => book == "Companion" ? Companion : book == "Modern" ? Modern : Legends;
+
+        internal readonly string Folder, Title;
+        private LorePages(string folder, string title) { Folder = folder; Title = title; }
+
         private const int Keep = 4;     // textures kept alive: the page being read and its neighbours
 
         private class Job
@@ -25,30 +35,33 @@ namespace RealisticSkies
             public byte[] png;          // fallback: let Unity decode it
             public int w, h;
             public string error;
+            public AssetBundleRequest req;  // the page comes ready-made from the mod's bundle
+            public bool Done => req != null ? req.isDone : done;
         }
 
-        private static string[] files;
-        private static readonly Dictionary<int, Texture2D> cache = new Dictionary<int, Texture2D>();
-        private static readonly Dictionary<int, Job> jobs = new Dictionary<int, Job>();
-        private static readonly List<int> recent = new List<int>();
+        private string[] files;
+        private readonly Dictionary<int, Texture2D> cache = new Dictionary<int, Texture2D>();
+        private readonly Dictionary<int, Job> jobs = new Dictionary<int, Job>();
+        private readonly List<int> recent = new List<int>();
+        private readonly HashSet<int> shared = new HashSet<int>();     // pages that are bundle assets
 
-        internal static string[] Files
+        internal string[] Files
         {
             get
             {
                 if (files == null)
                 {
-                    files = ModResources.LorePages();
-                    if (files.Length == 0) Debug.LogWarning("RealisticSkies: no Sea Legends pages found, the scroll is empty");
+                    files = ModResources.LorePages(Folder);
+                    if (files.Length == 0) Debug.LogWarning("RealisticSkies: no pages found for " + Title + ", the scroll is empty");
                 }
                 return files;
             }
         }
 
-        internal static int Count => Files.Length;
+        internal int Count => Files.Length;
 
         /// <summary>The page if it is ready, else null (it is then loading; ask again next frame).</summary>
-        internal static Texture2D Get(int index)
+        internal Texture2D Get(int index)
         {
             if (index < 0 || index >= Count) return null;
             Pump();
@@ -62,24 +75,25 @@ namespace RealisticSkies
         }
 
         /// <summary>Starts loading a page in the background if it is not loaded or loading already.</summary>
-        internal static void Request(int index)
+        internal void Request(int index)
         {
             if (index < 0 || index >= Count) return;
             if (cache.ContainsKey(index) || jobs.ContainsKey(index)) return;
             var job = new Job();
             jobs[index] = job;
             string file = Files[index];
-            ThreadPool.QueueUserWorkItem(_ => Decode(job, file));
+            job.req = ModResources.TextureAsync(file);
+            if (job.req == null) ThreadPool.QueueUserWorkItem(_ => Decode(job, file));
         }
 
         /// <summary>Uploads finished pages (main thread). Cheap when nothing is waiting.</summary>
-        internal static void Pump()
+        internal void Pump()
         {
             if (jobs.Count == 0) return;
             List<int> finished = null;
             foreach (KeyValuePair<int, Job> kv in jobs)
             {
-                if (kv.Value.done) (finished ?? (finished = new List<int>())).Add(kv.Key);
+                if (kv.Value.Done) (finished ?? (finished = new List<int>())).Add(kv.Key);
             }
             if (finished == null) return;
             foreach (int index in finished)
@@ -93,12 +107,21 @@ namespace RealisticSkies
             }
         }
 
-        private static Texture2D Upload(Job job, int index)
+        private Texture2D Upload(Job job, int index)
         {
-            string name = "Sea Legends " + Path.GetFileName(Files[index]);
+            string name = Title + " " + Path.GetFileName(Files[index]);
             try
             {
                 Texture2D tex;
+                if (job.req != null)
+                {
+                    tex = job.req.asset as Texture2D;
+                    if (tex == null) throw new Exception("not in the bundle");
+                    shared.Add(index);
+                    tex.wrapMode = TextureWrapMode.Clamp;
+                    tex.anisoLevel = 4;
+                    return tex;
+                }
                 if (job.raw != null)
                 {
                     tex = new Texture2D(job.w, job.h, TextureFormat.RGBA32, true);
@@ -127,7 +150,7 @@ namespace RealisticSkies
             }
         }
 
-        private static void Touch(int index)
+        private void Touch(int index)
         {
             recent.Remove(index);
             recent.Add(index);
@@ -135,7 +158,11 @@ namespace RealisticSkies
             {
                 int old = recent[0];
                 recent.RemoveAt(0);
-                if (cache.TryGetValue(old, out Texture2D t) && t != null) UnityEngine.Object.Destroy(t);
+                if (cache.TryGetValue(old, out Texture2D t) && t != null)
+                {
+                    if (shared.Remove(old)) Resources.UnloadAsset(t);
+                    else UnityEngine.Object.Destroy(t);
+                }
                 cache.Remove(old);
             }
         }

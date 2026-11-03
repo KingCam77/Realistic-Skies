@@ -88,7 +88,7 @@ namespace RealisticSkies
         // Lunar distance page: runtime copy of "Entries Left" with every column used for a distance
         private GameObject lunarLeft;
         private TextMesh lunarTitle;
-        private TextMesh lunarSun1, lunarSun2, lunarSunHeader;
+        private TextMesh lunarSun1, lunarSun2, lunarSunHeader, lunarSD;
         private TextMesh[] lunarCol1 = new TextMesh[8];
         private TextMesh[] lunarCol2 = new TextMesh[8];
         private TextMesh[] lunarHeader = new TextMesh[8];
@@ -713,6 +713,7 @@ namespace RealisticSkies
 
             Transform root = this.lunarLeft.transform;
             this.lunarTitle = FindText(root, "Title");
+            this.lunarSD = MakeSubtitle(this.lunarTitle, "Moon SD");
 
             // the Aries column becomes the Sun column
             this.lunarSun1 = FindText(root, "Aries AHA1");
@@ -751,9 +752,14 @@ namespace RealisticSkies
 
         private void FillLunarPage(int day1, int day2)
         {
-            SetText(this.lunarTitle, $"Days {day1} and {day2} AT  Lunar Distances");
+            // distances are to the moon's centre; a sight to its edge needs the semi-diameter, in a
+            // smaller line under the title
+            SetText(this.lunarTitle, $"Days {day1} and {day2} AT  Lunar Distances (centre)");
+            double sd = Lunar.MoonSemiDiameter;
+            SetText(this.lunarSD, double.IsNaN(sd) ? "" : $"Moon semi-diameter{Celestial.Format(sd)}'");
 
-            SetText(this.lunarSunHeader, this.lunarSunHeaderTemplate.Replace("Aries", "Sun").Replace("AHA", "Dist"));
+            // the Sun's column named on the same line as the stars'
+            SetText(this.lunarSunHeader, this.lunarSunHeaderTemplate.Replace("Aries", "").Replace("AHA", "Sun"));
             SetText(this.lunarSun1, DistanceColumn(Lunar.SunIndex, day1));
             SetText(this.lunarSun2, DistanceColumn(Lunar.SunIndex, day2));
 
@@ -864,6 +870,24 @@ namespace RealisticSkies
                 val += Celestial.Format(aha ? Celestial.MoonGHA(t, hr) : Celestial.MoonDec(t)) + "\n";
             }
             return val;
+        }
+
+        /// <summary>A smaller copy of a title, one line below it.</summary>
+        private static TextMesh MakeSubtitle(TextMesh title, string name)
+        {
+            if (title == null) return null;
+            Transform existing = title.transform.parent.Find(name);
+            if (existing != null) return existing.GetComponent<TextMesh>();
+            GameObject go = UnityEngine.Object.Instantiate(title.gameObject, title.transform.parent);
+            go.name = name;
+            TextMesh tm = go.GetComponent<TextMesh>();
+            int px = tm.fontSize > 0 ? tm.fontSize : (tm.font != null ? tm.font.fontSize : 14);
+            float line = px * 0.1f * title.characterSize * title.lineSpacing * 1.1f;     // one line of the title, local units
+            tm.characterSize = title.characterSize * 0.7f;
+            Transform t = go.transform;
+            t.localPosition = title.transform.localPosition - title.transform.localRotation * new Vector3(0f, line * title.transform.localScale.y, 0f);
+            tm.text = "";
+            return tm;
         }
 
         private static TextMesh FindText(Transform parent, string name)

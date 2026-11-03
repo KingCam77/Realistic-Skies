@@ -109,23 +109,18 @@ namespace RealisticSkies
         public static AssetBundle assets;
 
         /// <summary>
-        /// Swap the Star Chart's polar chart for the version with the constellation figures: the
-        /// StarChart.png built into the DLL, or a loose StarChart.png next to the plugin if there is one.
+        /// Swap the Star Chart's polar chart for the version with the constellation figures
+        /// (StarChart.png: loose file, the mod's bundle, or the copy in the DLL).
         /// </summary>
         private static void ReplaceChartTexture(Material m)
         {
             try
             {
-                byte[] data = ModResources.Read("StarChart.png", out string file);
-                if (data == null)
+                const string file = "StarChart.png";
+                Texture2D tex = ModResources.Texture(file, false);
+                if (tex == null)
                 {
                     Debug.LogWarning("RealisticSkies: no StarChart.png, keeping the original star chart");
-                    return;
-                }
-                var tex = new Texture2D(2, 2, TextureFormat.RGB24, true);
-                if (!ImageConversion.LoadImage(tex, data))
-                {
-                    Debug.LogWarning("RealisticSkies: could not read " + file + ", keeping the original star chart");
                     return;
                 }
                 tex.name = "StarChart (constellations)";
@@ -179,6 +174,13 @@ namespace RealisticSkies
                     }
                 }
                 ModItemLoreScroll.Register(PrefabsDirectory.instance);
+                ModItemHourglass.Register(PrefabsDirectory.instance);
+                ModItemWatchGlass.Register(PrefabsDirectory.instance);
+                ModItemPocketWatch.Register(PrefabsDirectory.instance);
+                ModItemJournal.Register(PrefabsDirectory.instance);
+                ModItemCrossStaff.Register(PrefabsDirectory.instance);
+                ModItemAstrolabe.Register(PrefabsDirectory.instance);
+                ModItemNocturnal.Register(PrefabsDirectory.instance);
             }
         }
 

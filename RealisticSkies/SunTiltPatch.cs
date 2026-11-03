@@ -120,7 +120,7 @@ namespace RealisticSkies
             }
             // ecliptic longitude 0 lies along local -Z and 90 along +X; turning about +Z lifts
             // longitude 90 to the north by the tilt (see the matching formula in Celestial.EclipticToEquatorial)
-            ecl.localRotation = baseRotation * Quaternion.AngleAxis(Plugin.configAxialTilt.Value, Vector3.forward);
+            ecl.localRotation = baseRotation * Quaternion.AngleAxis(Mode.AxialTilt, Vector3.forward);
         }
     }
 }
