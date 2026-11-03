@@ -6,8 +6,6 @@ A complete overhaul of the skies in Sailwind adding more depth, realism, and int
 
 <img width="2344" height="1439" alt="image" src="https://github.com/user-attachments/assets/03c9f2bc-2c1d-4061-bfab-828deabe0dd1" />
 
-<img width="2114" height="1439" alt="image" src="https://github.com/user-attachments/assets/9c87d144-c2ea-4d0f-8c10-47ce643e6949" />
-
 <img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
 
 <img width="1954" height="1439" alt="image" src="https://github.com/user-attachments/assets/930bc8fe-6989-4ee3-bd75-a896cd2bf87a" />
@@ -75,6 +73,9 @@ The planet's axis can be tilted, as Earth's is. The sun then climbs higher in su
 - Equation of Time: *noon drifts around 12:00 over the year. Default = true*
 
 ### Constellations and Legends
+
+<img width="2114" height="1439" alt="image" src="https://github.com/user-attachments/assets/9c87d144-c2ea-4d0f-8c10-47ce643e6949" />
+
 Sailors have drawn their own figures among the stars: Corvin's Sloop and the Widow's Grief around the North Star, the Harpoon with bright Oriens, the Ship's Cat, the Haymaker and his Bull, the Cobra near the southern pole, and more. Several of them point the way: the Arrowhead to the North Star, the Cobra's tail to the southern pole, Oriens to Milnead. Thirty-two stars and all seven planets have sailors' names. **[LORE.md](LORE.md)** describes all of them, and the **Sea Legends** scroll tells them in game.
 
 ##### Config Options
