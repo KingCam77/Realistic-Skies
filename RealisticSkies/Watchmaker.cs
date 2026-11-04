@@ -48,7 +48,7 @@ namespace RealisticSkies
                 {
                     { 1, ShopSpots.S(-1.417f, 0.001f, 15.124f, 0.0000f, -0.8856f, 0.0000f, -0.4644f) },
                     { 9, ShopSpots.S(3.362f, -0.033f, -1.290f, 0.0000f, -0.0212f, 0.0000f, 0.9998f) },
-                    { 15, ShopSpots.S(4.200f, -0.011f, -2.248f, 0.0000f, -0.2330f, 0.0000f, -0.9725f) },
+                    { 15, ShopSpots.S(-23.640f, -0.010f, 8.454f, 0.0000f, -0.1805f, 0.0000f, -0.9836f) },     // moved: another mod's trader stood here
                 }
             },
             {
@@ -56,14 +56,14 @@ namespace RealisticSkies
                 {
                     { 1, ShopSpots.S(-0.724f, 0.001f, 14.771f, 0.0000f, 0.3050f, 0.0000f, 0.9523f) },
                     { 9, ShopSpots.S(3.448f, -0.033f, -0.437f, 0.0000f, -0.7103f, 0.0000f, 0.7039f) },
-                    { 15, ShopSpots.S(4.426f, -0.010f, -1.265f, 0.0000f, -0.6299f, 0.0000f, 0.7767f) },
+                    { 15, ShopSpots.S(-23.316f, -0.012f, 9.233f, 0.0000f, -0.5735f, 0.0000f, 0.8192f) },
                 }
             },
             {
                 Bench, new Dictionary<int, ShopSpots.Spot>
                 {
                     { 1, ShopSpots.S(-0.765f, 0.719f, 14.755f, 0.5815f, -0.3513f, 0.3085f, 0.6659f) },
-                    { 15, ShopSpots.S(4.413f, 0.701f, -1.238f, -0.0779f, 0.7481f, -0.6534f, -0.0861f) },
+                    { 15, ShopSpots.S(-23.325f, 0.699f, 9.262f, -0.1238f, 0.7401f, -0.6463f, -0.1387f) },     // the old bench, carried along with the stall
                 }
             },
         };

@@ -64,7 +64,7 @@ namespace RealisticSkies
                 t.GetComponent<MeshFilter>().sharedMesh = this.sandMesh;
             }
             this.lastTime = -1;
-            this.hiss = ModItemHourglass.MakeSource(base.gameObject, ModItemHourglass.SandClip, true, 0.4f, 3.5f);
+            this.hiss = ModItemHourglass.MakeSource(base.gameObject, ModItemHourglass.SandClip, true, 0.13f, 3.5f);     // the sand a third of what it was
             if (this.hiss != null) this.hiss.pitch = UnityEngine.Random.Range(0.85f, 0.92f);
             this.bellSource = ModItemHourglass.MakeSource(base.gameObject, ModItemHourglass.Bell, false, 1f, 40f);
             this.Decode();

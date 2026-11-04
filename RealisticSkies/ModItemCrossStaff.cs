@@ -362,8 +362,8 @@ namespace RealisticSkies
         {
             if (wood != null) return;
             Shader sh = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
-            wood = new Material(sh) { name = "cross-staff wood", color = new Color(0.55f, 0.38f, 0.22f) };
-            wood.SetFloat("_Glossiness", 0.25f);
+            wood = new Material(sh) { name = "cross-staff wood", color = new Color(0.26f, 0.15f, 0.085f) };     // dark pear wood, oiled
+            wood.SetFloat("_Glossiness", 0.38f);
             brass = new Material(sh) { name = "cross-staff brass", color = new Color(0.78f, 0.62f, 0.30f) };
             brass.SetFloat("_Metallic", 0.8f);
             brass.SetFloat("_Glossiness", 0.6f);
@@ -386,6 +386,47 @@ namespace RealisticSkies
                 bool ok = Vector3.Dot(Vector3.Cross(corners[1] - corners[0], corners[2] - corners[0]), nn) > 0f;
                 if (ok) tri.AddRange(new[] { i0, i0 + 1, i0 + 2, i0, i0 + 2, i0 + 3 });
                 else tri.AddRange(new[] { i0, i0 + 2, i0 + 1, i0, i0 + 3, i0 + 2 });
+            }
+        }
+
+        /// <summary>A capped cylinder from a to b, smooth-shaded round its side.</summary>
+        internal static void Cyl(List<Vector3> v, List<Vector3> n, List<int> tri, Vector3 a, Vector3 b, float r, int seg = 24)
+        {
+            Vector3 ax = (b - a).normalized;
+            Vector3 u = Vector3.Cross(ax, Mathf.Abs(ax.y) < 0.9f ? Vector3.up : Vector3.right).normalized;
+            Vector3 w = Vector3.Cross(ax, u);
+            void Tri(int i, int j, int k, Vector3 outward)
+            {
+                if (Vector3.Dot(Vector3.Cross(v[j] - v[i], v[k] - v[i]), outward) > 0f) tri.AddRange(new[] { i, j, k });
+                else tri.AddRange(new[] { i, k, j });
+            }
+            int side = v.Count;
+            for (int k = 0; k <= seg; k++)
+            {
+                float t = k * Mathf.PI * 2f / seg;
+                Vector3 d = u * Mathf.Cos(t) + w * Mathf.Sin(t);
+                v.Add(a + d * r); n.Add(d);
+                v.Add(b + d * r); n.Add(d);
+            }
+            for (int k = 0; k < seg; k++)
+            {
+                int i = side + k * 2;
+                Vector3 mid = ((v[i] + v[i + 3]) / 2f - (a + b) / 2f);
+                Vector3 outward = mid - ax * Vector3.Dot(mid, ax);
+                Tri(i, i + 2, i + 3, outward);
+                Tri(i, i + 3, i + 1, outward);
+            }
+            foreach (bool end in new[] { false, true })
+            {
+                Vector3 c = end ? b : a, nn = end ? ax : -ax;
+                int ci = v.Count;
+                v.Add(c); n.Add(nn);
+                for (int k = 0; k <= seg; k++)
+                {
+                    float t = k * Mathf.PI * 2f / seg;
+                    v.Add(c + (u * Mathf.Cos(t) + w * Mathf.Sin(t)) * r); n.Add(nn);
+                }
+                for (int k = 0; k < seg; k++) Tri(ci, ci + 1 + k, ci + 2 + k, nn);
             }
         }
 
@@ -451,7 +492,18 @@ namespace RealisticSkies
                         Box(v, n, b, new Vector3(-wk, -y1, -0.0002f), new Vector3(wk, -y0, 0.0002f));
                     }
                 }
-                Box(v, n, w, new Vector3(-RodSide * 0.9f, -RodSide * 0.9f, -h), new Vector3(RodSide * 0.9f, RodSide * 0.9f, h));   // the collar on the rod
+                // the turned brass sleeve that slides on the rod (round, enclosing the square rod's corners),
+                // a little longer than the transom is thick, with a raised bead at either end
+                float r = RodSide * 0.8f, cz = h * 1.8f;
+                Cyl(v, n, b, new Vector3(0f, 0f, -cz), new Vector3(0f, 0f, cz), r, 32);
+                Cyl(v, n, b, new Vector3(0f, 0f, -cz), new Vector3(0f, 0f, -cz + 0.0018f), r + 0.0009f, 32);
+                Cyl(v, n, b, new Vector3(0f, 0f, cz - 0.0018f), new Vector3(0f, 0f, cz), r + 0.0009f, 32);
+                Cyl(v, n, b, new Vector3(0f, 0f, -0.0007f), new Vector3(0f, 0f, 0.0007f), r + 0.0005f, 32);      // a fine middle line
+                // the thumbscrew that clamps it: a boss on the sleeve, a shank, a round head and a wing
+                Cyl(v, n, b, new Vector3(r - 0.001f, 0f, 0f), new Vector3(r + 0.0025f, 0f, 0f), 0.0032f, 16);
+                Cyl(v, n, b, new Vector3(r + 0.0025f, 0f, 0f), new Vector3(r + 0.0065f, 0f, 0f), 0.0015f, 12);
+                Cyl(v, n, b, new Vector3(r + 0.0065f, 0f, 0f), new Vector3(r + 0.008f, 0f, 0f), 0.0036f, 20);
+                Box(v, n, b, new Vector3(r + 0.008f, -0.0009f, -0.0085f), new Vector3(r + 0.0115f, 0.0009f, 0.0085f));
             });
         }
 
@@ -550,7 +602,7 @@ namespace RealisticSkies
                 t.characterSize = 0.0022f;
                 t.anchor = TextAnchor.MiddleCenter;
                 t.alignment = TextAlignment.Center;
-                t.color = new Color(0.12f, 0.07f, 0.03f);
+                t.color = new Color(0.86f, 0.68f, 0.32f);     // brass figures, inlaid in the dark wood
                 var r = go.GetComponent<MeshRenderer>();
                 r.sharedMaterial = fontMat;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

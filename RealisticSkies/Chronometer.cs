@@ -170,6 +170,31 @@ namespace RealisticSkies
     [HarmonyPatch]
     internal static class ChronometerPatches
     {
+        private static readonly AccessTools.FieldRef<LookUI, TextMesh> ExtraText = AccessTools.FieldRefAccess<LookUI, TextMesh>("extraText");
+
+        /// <summary>
+        /// Its number under it when you look at it or hold it: many are nailed down and never picked
+        /// up. Added to the text as it is shown, not written into lookText, so another mod's own
+        /// lookText (the alarm clock's "alarm 06:30") stays and shows above it.
+        /// </summary>
+        private static void AddNumber(LookUI ui, Component target)
+        {
+            if (Mode.Chronometers == Keeping.Perfect || !(target is ShipItemClock clock) || !clock.sold) return;
+            TextMesh t = ExtraText(ui);
+            if (t == null) return;
+            ChronoState s = ChronoState.Of(clock);
+            string number = "No. " + s.serial + (s.Running ? "" : " (stopped)");
+            t.text = string.IsNullOrEmpty(t.text) ? number : t.text + "\n" + number;
+        }
+
+        [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowLookText))]
+        [HarmonyPostfix]
+        private static void NumberOnLook(LookUI __instance, GoPointerButton button) => AddNumber(__instance, button);
+
+        [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowHoldText))]
+        [HarmonyPostfix]
+        private static void NumberOnHold(LookUI __instance, PickupableItem item) => AddNumber(__instance, item);
+
         /// <summary>The hands, from the chronometer's own time when it isn't the base game's perfect one.</summary>
         [HarmonyPatch(typeof(ShipItemClock), "ExtraLateUpdate")]
         [HarmonyPrefix]
@@ -178,8 +203,6 @@ namespace RealisticSkies
             if (Mode.Chronometers == Keeping.Perfect) return true;
             ChronoState s = ChronoState.Of(__instance);
             s.Advance(__instance.sold);
-            // its number under it when you look at it: many are nailed down and never picked up
-            if (__instance.sold) __instance.lookText = "No. " + s.serial + (s.Running ? "" : " (stopped)");
             double t = s.ShownHours;
             var tr = Traverse.Create(__instance);
             Transform hour = tr.Field("hourHand").GetValue<Transform>();
