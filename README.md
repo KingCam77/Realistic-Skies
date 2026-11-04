@@ -2,13 +2,9 @@
 
 A complete overhaul of the skies in Sailwind adding more depth, realism, and interaction to stars.
 
-*Version 2.3.0F-1 is a fork of [KingCam77's Realistic Skies](https://github.com/KingCam77/Realistic-Skies), made with his permission. It adds navigation by the Sun and the Moon, lunar distances, seasons, sailors' constellations and their legends, and the instruments of the old navigators, from the cross-staff to the chronometer.
+*Version 2.3.0F-2 is a fork of [KingCam77's Realistic Skies](https://github.com/KingCam77/Realistic-Skies), made with his permission. It adds navigation by the Sun and the Moon, lunar distances, seasons, sailors' constellations and their legends, and the instruments of the old navigators, from the cross-staff to the chronometer.
 
 <img width="2344" height="1439" alt="image" src="https://github.com/user-attachments/assets/03c9f2bc-2c1d-4061-bfab-828deabe0dd1" />
-
-## Tutorial
-This video walks through how to use the instruments and obtaining a fix from the stars
-https://www.youtube.com/watch?v=06BABS5Zv-U
 
 ## Getting started
 
