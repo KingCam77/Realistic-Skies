@@ -837,14 +837,18 @@ namespace RealisticSkies
                 double err = line.ErrorAt(now);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("No. " + c.serial + " shows <b>" + NavMath.Clock(c.ShownHours) + "</b>" + (c.Running ? "" : "  (stopped)"), sResult, GUILayout.Width(400));
-                GUI.enabled = w != null && !double.IsNaN(err) && c.Running;
+                // its own error not found yet: it is taken as right (a new chronometer is near enough)
+                bool unknown = double.IsNaN(err);
+                double cErr = unknown ? 0.0 : err;
+                GUI.enabled = w != null && c.Running;
                 if (GUILayout.Button("Watch error from it", sButton, GUILayout.Width(250)))
                 {
                     // the zero meridian's time is what it shows less its error; the watch is off from that
-                    double gmt = c.ShownHours - err;
+                    double gmt = c.ShownHours - cErr;
                     double we = Celestial.Repeat(w.ShownHours - gmt + 12.0, 24.0) - 12.0;
                     errText = (we < 0 ? "-" : "+") + NavMath.Clock(Math.Abs(we));
-                    AddNote("Day " + GameState.day + ": compared with chronometer No. " + c.serial + ", watch " + (we >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(we)).Substring(1));
+                    AddNote("Day " + GameState.day + ": compared with chronometer No. " + c.serial + ", watch " + (we >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(we)).Substring(1) +
+                        (unknown ? " (the chronometer's own error not known: taken as right)" : ""));
                     Save();
                     UISoundPlayer.instance.PlayParchmentSound();
                 }
@@ -860,6 +864,8 @@ namespace RealisticSkies
                 }
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
+				if (!c.Running) GUILayout.Label("It has stopped: wind it first.", sSmall);
+                else if (double.IsNaN(err)) GUILayout.Label("Its error isn't known yet: the left button takes it as right.", sSmall);
             }
             GUILayout.Space(10);
 

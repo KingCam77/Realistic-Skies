@@ -24,6 +24,10 @@ namespace RealisticSkies
                 MoonPatch.moonHalo = UnityEngine.Object.Instantiate<GameObject>(MoonPatch.Halo, Moon.transform);
 
                 MatSetup.SetMat("Assets/Texture2D/MoonHalo.tif", MoonPatch.moonHalo);
+				// the halo's own glow, kept to be scaled by the Moon Halo option
+                Renderer haloR = MoonPatch.moonHalo.GetComponent<Renderer>();
+                if (haloR.material.HasProperty("_EmissionColor")) MoonPatch.haloEmission = haloR.material.GetColor("_EmissionColor");
+
 
                 MoonPatch.moonLight = GameObject.Find("moon light water");
                 MoonPatch.moonLightComp = MoonPatch.moonLight.GetComponent<Light>();
@@ -44,14 +48,19 @@ namespace RealisticSkies
 
         public static void UpdateMoonPatch()
         {
-            if (Plugin.configMoonSizeToggle.Value)
+            if (Plugin.configMoonSizeToggle.Value && MoonPatch.moonHalo != null)
             {
-                
-                float intensity = MoonPatch.moonLightComp.intensity;
-                MatSetup.SetAlpha(0.5f * intensity, MoonPatch.moonHalo);
-
-                MoonPatch.moonHalo.transform.LookAt(SkyboxManager.Skybox.transform.position);
-
+                float k = Plugin.configMoonHalo.Value;
+                bool on = k > 0f;
+                if (MoonPatch.moonHalo.activeSelf != on) MoonPatch.moonHalo.SetActive(on);
+                if (on)
+                {
+                    float intensity = MoonPatch.moonLightComp.intensity;
+                    MatSetup.SetAlpha(0.5f * intensity * k, MoonPatch.moonHalo);
+                    Renderer haloR = MoonPatch.moonHalo.GetComponent<Renderer>();
+                    if (haloR.material.HasProperty("_EmissionColor")) haloR.material.SetColor("_EmissionColor", MoonPatch.haloEmission * k);
+                    MoonPatch.moonHalo.transform.LookAt(SkyboxManager.Skybox.transform.position);
+                }
             }
         }
 
@@ -62,6 +71,8 @@ namespace RealisticSkies
         public static GameObject Halo;
 
         public static GameObject moonHalo;
+		
+		private static Color haloEmission = Color.white;
 
         public static GameObject Skybox;
 

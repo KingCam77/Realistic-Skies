@@ -39,6 +39,8 @@ namespace RealisticSkies
                 new ConfigDescription("How fast the look turns while an instrument is up to the eye, as a part of the normal speed at a 60 degree view (it slows further as the instrument's view narrows).", new AcceptableValueRange<float>(0.1f, 1f)));
             configAimSmoothing = Config.Bind("Instruments", "Aim Smoothing", 0.06f,
                 new ConfigDescription("Seconds over which the mouse's movement is smoothed while aiming an instrument. 0 = none.", new AcceptableValueRange<float>(0f, 0.3f)));
+            configStudyZoom = Config.Bind("Instruments", "Study Zoom", 250f,
+                new ConfigDescription("How close Shift + right click brings the Star Map, the Almanac or the Celestial Atlas to the eye, in percent of the usual size.", new AcceptableValueRange<float>(150f, 400f)));
 
             configSiderialToggle = Config.Bind("Stars",
                                          "Sideral Rotation",
@@ -54,6 +56,12 @@ namespace RealisticSkies
                                          "Moon Size",
                                          true,
                                          "Whether the moon is shrunk down to a realistic size.");
+										 
+			configMoonHalo = Config.Bind("Moon",
+										 "Moon Halo",
+										 1f,
+										 new ConfigDescription("How bright the glow around the moon is (with Moon Size on): 1 = as made, 0.5 = half, 0 = none.",
+											 new AcceptableValueRange<float>(0f, 1f)));
 
             configZodiacToggle = Config.Bind("Stars",
                                          "Zodiacal Light",
@@ -203,6 +211,10 @@ namespace RealisticSkies
                                          "Quintant Help",  // The key of the configuration option in the configuration file
                                          "Arc", // The default value
                                          "How much of the readings from the quintant should be displayed as text: None, Arc, Sec, Full."); // Description of the option to show in the config file
+			configModNotifications = Config.Bind("General",
+                "Mod Notifications",
+                true,
+                "Pop-up messages from this mod (readings, hints). Off: none of them; the game's own still show. Readings still go into the Navigator's Journal.");
 
         }
         
@@ -246,12 +258,15 @@ namespace RealisticSkies
         internal static ConfigEntry<int> configYearLen;
         internal static ConfigEntry<float> configAimSensitivity;
         internal static ConfigEntry<float> configAimSmoothing;
+        internal static ConfigEntry<float> configStudyZoom;
 
         internal static ConfigEntry<bool> configSiderialToggle;
 
         internal static ConfigEntry<bool> configMoonDimToggle;
 
         internal static ConfigEntry<bool> configMoonSizeToggle;
+		
+		internal static ConfigEntry<float> configMoonHalo;
 
         internal static ConfigEntry<bool> configZodiacToggle;
 
@@ -287,6 +302,8 @@ namespace RealisticSkies
         internal static ConfigEntry<bool> configPlanetNames;
 
         internal static ConfigEntry<bool> configStarNames;
+		
+		internal static ConfigEntry<bool> configModNotifications;
 
         internal static Plugin instance;
 

@@ -31,7 +31,7 @@ namespace RealisticSkies
         private const float HoleRadius = 1.2f;              // degrees
         // the hanging ring as a pendulum: about a 0.7 s swing, lightly damped
         private const float PendulumLength = 0.12f, Damping = 0.30f;
-        private const float Steadied = 0.6f;                // the heavy ring, steadied by the hand: it takes the pushes less
+        private const float Steadied = 0.2f;                // the heavy ring, steadied by the hand: it takes the pushes less
 
         private float zenith = 45f;                         // the reading the alidade is left at
         private Transform alidade;
@@ -80,7 +80,14 @@ namespace RealisticSkies
 
         public override void OnAltHeld()
         {
-            if (base.sold && base.held != null) sightFrame = Time.frameCount;
+            if (!base.sold || base.held == null) return;
+            // Shift + right click: brought close to look it over, not raised to the eye
+            if (!sighting && (StudyMode.Shift || StudyMode.Studying(this)))
+            {
+                StudyMode.Mark(this);
+                return;
+            }
+            sightFrame = Time.frameCount;
         }
 
         public override bool AllowOnItemClick(GoPointerButton lookedAtButton)

@@ -65,10 +65,10 @@ namespace RealisticSkies
             }
             this.lastTime = -1;
             this.loadFrame = Time.frameCount;
-            this.hiss = MakeSource(base.gameObject, SandClip, true, 0.12f, 3f);      // a third of what it was: players found it loud
+            this.hiss = MakeSource(base.gameObject, SandClip, true, 0.12f, 3f);      // the sand a third of what it was: players found it loud
             // the bigger glass sounds a little deeper
             if (this.hiss != null) this.hiss.pitch = UnityEngine.Random.Range(0.95f, 1.05f) / Mathf.Sqrt(this.scale);
-            this.bellSource = MakeSource(base.gameObject, Bell, false, 0.3f, 30f);
+            this.bellSource = MakeSource(base.gameObject, Bell, false, 0.9f, 30f);
             this.UpdateSand(true);
         }
 

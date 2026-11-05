@@ -24,7 +24,7 @@ namespace RealisticSkies
         [HarmonyPostfix]
         private static void Wrap(NotificationUi __instance, string notification)
         {
-            if (string.IsNullOrEmpty(notification)) return;
+            if (NotificationMute.Muted || string.IsNullOrEmpty(notification)) return;
             TextMesh tm = Traverse.Create(__instance).Field("text").GetValue<TextMesh>();
             if (tm == null || tm.font == null) return;
             if (baseSize < 0f) { baseSize = tm.characterSize; baseSpacing = tm.lineSpacing; }
@@ -84,6 +84,37 @@ namespace RealisticSkies
                 if (f.GetCharacterInfo(c, out CharacterInfo ci, size, tm.fontStyle)) w += ci.advance;
             }
             return w;
+        }
+    }
+	/// <summary>
+    /// With Mod Notifications off, the mod's own pop-ups are not shown; the game's still are.
+    /// Who asked for the message is told by the first caller on the stack outside the notification.
+    /// </summary>
+    [HarmonyPatch(typeof(NotificationUi), "ShowNotification", new[] { typeof(string), typeof(float) })]
+    internal static class NotificationMute
+    {
+        internal static bool Muted;
+        private static readonly System.Reflection.Assembly Mine = typeof(NotificationMute).Assembly;
+
+        [HarmonyPrefix]
+        private static bool Prefix()
+        {
+            Muted = Plugin.configModNotifications != null && !Plugin.configModNotifications.Value && FromMod();
+            return !Muted;
+        }
+
+        private static bool FromMod()
+        {
+            var st = new System.Diagnostics.StackTrace(1, false);
+            for (int i = 0; i < st.FrameCount; i++)
+            {
+                System.Reflection.MethodBase m = st.GetFrame(i).GetMethod();
+                System.Type t = m != null ? m.DeclaringType : null;
+                if (t == null || t == typeof(NotificationUi) || t == typeof(NotificationMute)) continue;
+                if (m.Name.Contains("ShowNotification")) continue;
+                return t.Assembly == Mine;
+            }
+            return false;
         }
     }
 }

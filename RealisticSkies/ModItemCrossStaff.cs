@@ -57,12 +57,29 @@ namespace RealisticSkies
             ShowTransom();
         }
 
+        private static Transform rigRod;
+        private const float RigRodGrowth = 0.5f;     // at 10 degrees the rod's end takes this much more of the screen than at 90
+
+        private static float SightFov(float a) => Mathf.Clamp(a + SightMargin, 20f, 100f);
+
         private static float Distance(float a) => Transom / 2f / Mathf.Tan(a * 0.5f * Mathf.Deg2Rad);
 
         private void ShowTransom()
         {
             if (modelTransom != null) modelTransom.localPosition = new Vector3(-Rod / 2f + Distance(angle), 0f, 0f);
             if (rigTransom != null) rigTransom.localPosition = new Vector3(0f, 0f, Distance(angle));
+            if (rigRod != null)
+            {
+                float behind = TransomSide / 2f * 1.8f + 0.004f;            // the sleeve's half-length and a little more
+                float from = Mathf.Max(0.01f, Distance(angle) - behind);
+                float from90 = Distance(MaxAngle) - behind;
+                float seen90 = 2f * Mathf.Atan(RodSide / 2f / from90) * Mathf.Rad2Deg;     // its true size at 90 degrees
+                float share = seen90 / SightFov(MaxAngle) * (1f + RigRodGrowth * (MaxAngle - angle) / (MaxAngle - MinAngle));
+                float seen = share * SightFov(angle);
+                float k = from * Mathf.Tan(seen * 0.5f * Mathf.Deg2Rad) / (RodSide / 2f);
+                rigRod.localPosition = new Vector3(0f, 0f, from);
+                rigRod.localScale = new Vector3(k, k, (Rod - from) / Rod);
+            }
         }
 
         public override void OnScroll(float input)
@@ -83,13 +100,19 @@ namespace RealisticSkies
                 base.OnAltActivate();
                 return;
             }
-            if (LunarMode && lunarLock == NoLock) LockStar();
+            if (LunarMode && lunarLock == NoLock && !StudyMode.Shift) LockStar();
         }
 
         /// <summary>Held right click: up to the eye.</summary>
         public override void OnAltHeld()
         {
             if (!base.sold || base.held == null) return;
+            // Shift + right click: brought close to read its scale, not raised to the eye
+            if (!sighting && (StudyMode.Shift || StudyMode.Studying(this)))
+            {
+                StudyMode.Mark(this);
+                return;
+            }
             if (LunarMode && lunarLock == NoLock) return;
             sightFrame = Time.frameCount;
         }
@@ -444,20 +467,20 @@ namespace RealisticSkies
         }
 
         /// <summary>The rod along z, centred; scale marks of brass along its top.</summary>
-        private static Mesh RodMesh(float zFrom, float zTo)
+        private static Mesh RodMesh(float zFrom, float zTo, bool brass = true)
         {
             return MakeMesh("cross-staff rod", (v, n, w, b) =>
             {
                 float h = RodSide / 2f;
                 Box(v, n, w, new Vector3(-h, -h, zFrom), new Vector3(h, h, zTo));
                 // a mark every five degrees of the transom's span, on the rod's top
-                for (int deg = (int)MinAngle; deg <= (int)MaxAngle; deg += 5)
+                for (int deg = (int)MinAngle; brass && deg <= (int)MaxAngle; deg += 5)
                 {
                     float z = zFrom + Distance(deg) * (zTo - zFrom) / Rod;
                     float wide = deg % 10 == 0 ? h : h * 0.5f;
                     Box(v, n, b, new Vector3(-wide, h, z - 0.0012f), new Vector3(wide, h + 0.0008f, z + 0.0012f));
                 }
-                Box(v, n, b, new Vector3(-h - 0.002f, -h - 0.002f, zTo - 0.03f), new Vector3(h + 0.002f, h + 0.002f, zTo));      // the end ferrule
+                if (brass) Box(v, n, b, new Vector3(-h - 0.002f, -h - 0.002f, zTo - 0.03f), new Vector3(h + 0.002f, h + 0.002f, zTo));      // the end ferrule
             });
         }
 
@@ -531,9 +554,12 @@ namespace RealisticSkies
             pivot.SetParent(root.transform, false);
             // the eye is at the rod's end: the rod runs straight out along the line of sight, under the
             // middle of the transom (seen end on it is a small square in the middle of the view)
-            GameObject rod = Part("rod", RodMesh(0.2f, Rod), pivot, layer);
+            // Its near end rides just in front of the sleeve, so the sleeve is always on it; its thickness
+            // is set in ShowTransom so that, seen end on, it is the model's at 90 degrees and grows only
+            // gently on the screen as the transom goes out (the view narrows as it does).
+            GameObject rod = Part("rod", RodMesh(0f, Rod, false), pivot, layer);      // plain wood: thickened, the marks and ferrule peeped out round its end
             rod.transform.localPosition = Vector3.zero;
-            rod.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
+            rigRod = rod.transform;
             transom = Part("transom", TransomMesh(true), pivot, layer).transform;
             return root;
         }

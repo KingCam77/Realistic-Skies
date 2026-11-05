@@ -128,7 +128,14 @@ namespace RealisticSkies
 
         public override void OnAltHeld()
         {
-            if (base.sold && base.held != null) sightFrame = Time.frameCount;
+            if (!base.sold || base.held == null) return;
+            // Shift + right click: brought close to look it over, not raised to the eye
+            if (!sighting && (StudyMode.Shift || StudyMode.Studying(this)))
+            {
+                StudyMode.Mark(this);
+                return;
+            }
+            sightFrame = Time.frameCount;
         }
 
         public override bool AllowOnItemClick(GoPointerButton lookedAtButton)
@@ -164,8 +171,8 @@ namespace RealisticSkies
             base.ExtraLateUpdate();
             bool want = base.held != null && Time.frameCount - sightFrame <= 2 && !NavJournal.IsOpen;
             if (want && !sighting) BeginSight();
-            if (sighting) InstrumentAim.Mark();
             else if (!want && sighting) EndSight(base.held != null);
+            if (sighting) InstrumentAim.Mark();
         }
 
         // ---------------- at the eye ----------------
