@@ -90,9 +90,7 @@ namespace RealisticSkies
             if (this.LookingClose)
             {
                 bool hours = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-                this.error += notches * (hours ? 1f : 1f / 60f);
-                if (this.error > 12f) this.error -= 24f;
-                if (this.error < -12f) this.error += 24f;
+                this.error = Wrap6(this.error + notches * (hours ? 1f : 1f / 60f));
                 UISoundPlayer.instance.PlayUISound(UISounds.winchClick, 0.12f, 2.6f);
             }
             else if (notches > 0 && Mode.PocketWatches == Keeping.Dead)
@@ -169,8 +167,17 @@ namespace RealisticSkies
                 this.runLeft -= run;
             }
             // stopped: the hands stand, so the watch falls behind the true time
-            this.error -= (float)dt - run;
-            this.error = Mathf.Repeat(this.error + 12f, 24f) - 12f;
+            float stood = (float)dt - run;
+			if (stood > 0f)
+			{
+			// stopped: the hands stand; whatever they show is read in the half-day nearest the truth
+			this.error = Wrap6(this.error - stood);
+			}
+			else
+			{
+			// running: leave it be (only a guard against a watch left running for months)
+			this.error = Mathf.Repeat(this.error + 12f, 24f) - 12f;
+			}
         }
 
         /// <summary>Puts the hands right by a known error (hours fast): the navigator setting his watch.</summary>
@@ -178,7 +185,7 @@ namespace RealisticSkies
         {
             this.Decode();
             this.Advance();
-            this.error = Mathf.Repeat(this.error - (float)fastBy + 12f, 24f) - 12f;
+            this.error = Wrap6(this.error - (float)fastBy);
             this.Encode();
             this.ShowHands();
         }
@@ -208,7 +215,7 @@ namespace RealisticSkies
                 this.rate = Mathf.Clamp(Gauss() * RateSigma, -RateMax, RateMax);
                 this.runLeft = 0f;
                 double t = TrueHours() % 12.0;
-                this.error = -(float)t;
+                this.error = Wrap6(-(float)t);
                 this.Encode();
                 return;
             }
@@ -239,6 +246,13 @@ namespace RealisticSkies
             this.hour.localRotation = Quaternion.Euler(0f, 0f, -h);
             this.minute.localRotation = Quaternion.Euler(0f, 0f, -m);
         }
+		
+		/// <summary>
+		/// The dial shows 12 hours: what the hands show is read in the half of the day nearest the true time.
+		/// Only where the hands are moved or stand, never while the watch runs, so a drift of minutes can't
+		/// flip the half-day under an error already written in the journal.
+		/// </summary>
+		private static float Wrap6(float h) => Mathf.Repeat(h + 6f, 12f) - 6f;
 
         // ---------------- model ----------------
 
