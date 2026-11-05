@@ -26,6 +26,7 @@ namespace RealisticSkies
                 MatSetup.SetMat("Assets/Texture2D/MoonHalo.tif", MoonPatch.moonHalo);
 
                 MoonPatch.moonLight = GameObject.Find("moon light water");
+                MoonPatch.moonLightComp = MoonPatch.moonLight.GetComponent<Light>();
             }
 
             // Enable Zodiac
@@ -46,7 +47,7 @@ namespace RealisticSkies
             if (Plugin.configMoonSizeToggle.Value)
             {
                 
-                float intensity = MoonPatch.moonLight.GetComponent<Light>().intensity;
+                float intensity = MoonPatch.moonLightComp.intensity;
                 MatSetup.SetAlpha(0.5f * intensity, MoonPatch.moonHalo);
 
                 MoonPatch.moonHalo.transform.LookAt(SkyboxManager.Skybox.transform.position);
@@ -65,6 +66,8 @@ namespace RealisticSkies
         public static GameObject Skybox;
 
         public static GameObject moonLight;
+
+        private static Light moonLightComp;
 
         public static GameObject ZodiacBox;
 

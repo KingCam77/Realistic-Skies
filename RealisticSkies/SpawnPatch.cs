@@ -19,7 +19,18 @@ namespace RealisticSkies
             int parentIslandIndex = __instance.gameObject.GetComponent<IslandSceneryScene>().parentIslandIndex;
             if (Patches.shopKeepers.ContainsKey(parentIslandIndex))
             {
-                UnityEngine.Object.Instantiate<ShopInfo>(Patches.shopKeepers[parentIslandIndex], __instance.transform).shopPrefab.transform.parent = __instance.transform;
+                ShopInfo info = UnityEngine.Object.Instantiate<ShopInfo>(Patches.shopKeepers[parentIslandIndex], __instance.transform);
+                info.shopPrefab.transform.parent = __instance.transform;
+                ShopSpots.Shops[parentIslandIndex] = info.shopPrefab.transform;
+                ModItemLoreScroll.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemHourglass.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemWatchGlass.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemPocketWatch.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemJournal.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemCrossStaff.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemAstrolabe.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemNocturnal.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                Watchmaker.AddToShop(info.shopPrefab.transform, parentIslandIndex);
             }
         }
 

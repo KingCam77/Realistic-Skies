@@ -37,6 +37,17 @@ namespace RealisticSkies
                 {
                     Debug.LogWarning("RealisticSkies: unable to refresh shader: " + shaderName + " in material " + m.name);
                 }
+
+                // star chart and atlas pages have to draw in the same queue as the sky items,
+                // otherwise they come out washed out and blurry
+                if (m.name == "map item stars" || m.name == "scroll page")
+                {
+                    m.renderQueue = 2800;
+                }
+                if (m.name == "map item stars" && Plugin.configConstellationChart.Value)
+                {
+                    ReplaceChartTexture(m);
+                }
             }
 
             foreach (GameObject gameObject in Patches.assets.LoadAllAssets<GameObject>())
@@ -65,6 +76,12 @@ namespace RealisticSkies
                         gameObject.AddComponent<ModItemPlanisphere>();
                         Debug.Log($"RealisticSkies: replaced planisphere ship item");
                     }
+                    if (saveable.prefabIndex == 706 && gameObject.GetComponent<ShipItem>() is ShipItem)
+                    {
+                        Destroy(gameObject.GetComponent<ShipItem>());
+                        gameObject.AddComponent<ModItemCharts>();
+                        Debug.Log($"RealisticSkies: replaced Charts ship item");
+                    }
                 } 
                 else
                 {
@@ -90,6 +107,38 @@ namespace RealisticSkies
         }
 
         public static AssetBundle assets;
+
+        /// <summary>
+        /// Swap the Star Chart's polar chart for the version with the constellation figures
+        /// (StarChart.png: loose file, the mod's bundle, or the copy in the DLL).
+        /// </summary>
+        private static void ReplaceChartTexture(Material m)
+        {
+            try
+            {
+                const string file = "StarChart.png";
+                Texture2D tex = ModResources.Texture(file, false);
+                if (tex == null)
+                {
+                    Debug.LogWarning("RealisticSkies: no StarChart.png, keeping the original star chart");
+                    return;
+                }
+                tex.name = "StarChart (constellations)";
+                tex.anisoLevel = 4;
+                Texture old = m.mainTexture;
+                if (old != null)
+                {
+                    tex.wrapMode = old.wrapMode;
+                    tex.filterMode = old.filterMode;
+                }
+                m.mainTexture = tex;
+                Debug.Log($"RealisticSkies: star chart texture {(old != null ? old.name : "none")} replaced with {file} ({tex.width}x{tex.height})");
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("RealisticSkies: could not replace the star chart: " + e.Message);
+            }
+        }
 
         public static Material starMat;
 
@@ -124,6 +173,14 @@ namespace RealisticSkies
                         Debug.LogWarning(string.Format("RealisticSkies: Prefab at index {0} already exists in directory, skipping {1}", keyValuePair.Key, keyValuePair.Value.name));
                     }
                 }
+                ModItemLoreScroll.Register(PrefabsDirectory.instance);
+                ModItemHourglass.Register(PrefabsDirectory.instance);
+                ModItemWatchGlass.Register(PrefabsDirectory.instance);
+                ModItemPocketWatch.Register(PrefabsDirectory.instance);
+                ModItemJournal.Register(PrefabsDirectory.instance);
+                ModItemCrossStaff.Register(PrefabsDirectory.instance);
+                ModItemAstrolabe.Register(PrefabsDirectory.instance);
+                ModItemNocturnal.Register(PrefabsDirectory.instance);
             }
         }
 
@@ -156,6 +213,11 @@ namespace RealisticSkies
                     {
                         PlanetPatch.StartPlanetsPatch();
                     }
+
+                    if (Patches.Zenv.GetComponent<StarLabels>() == null)
+                    {
+                        Patches.Zenv.AddComponent<StarLabels>();
+                    }
                 }
             }
 
@@ -174,6 +236,7 @@ namespace RealisticSkies
                 if (!Plugin.configDisable.Value)
                 {
                     SkyboxManager.UpdateSkybox();
+                    EclipticTilt.Apply();
 
                     StarPatch.UpdateStarPatch();
                     MoonPatch.UpdateMoonPatch();

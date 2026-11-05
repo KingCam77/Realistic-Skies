@@ -6,7 +6,7 @@ using UnityEngine;
 namespace RealisticSkies
 {
 
-    public class ModItemPlanisphere : ShipItem
+    public class ModItemPlanisphere : ShipItemHangable
     {
         // Scroll: change angle
         // Inspect: flip over

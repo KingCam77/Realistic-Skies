@@ -25,6 +25,7 @@ namespace RealisticSkies
             MatSetup.SetMat(texpath, SkyboxManager.starSkybox);
 
             StarPatch.moonLight = GameObject.Find("moon light water");
+            StarPatch.moonLightComp = StarPatch.moonLight.GetComponent<Light>();
         }
 
 
@@ -32,7 +33,7 @@ namespace RealisticSkies
         {
             
             
-            float intensity = StarPatch.moonLight.GetComponent<Light>().intensity;
+            float intensity = StarPatch.moonLightComp.intensity;
             StarPatch.scale = (-0.75f * intensity * intensity + 1);
 
             if (Plugin.configMoonDimToggle.Value)
@@ -58,6 +59,8 @@ namespace RealisticSkies
         public static GameObject OldSkybox;
 
         public static GameObject moonLight;
+
+        private static Light moonLightComp;
 
         public static float scale;
     }
