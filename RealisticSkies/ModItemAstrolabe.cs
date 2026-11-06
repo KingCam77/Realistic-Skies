@@ -30,7 +30,7 @@ namespace RealisticSkies
         private const float SightFov = 30f;
         private const float HoleRadius = 1.2f;              // degrees
         // the hanging ring as a pendulum: about a 0.7 s swing, lightly damped
-        private const float PendulumLength = 0.12f, Damping = 0.30f;
+        private const float PendulumLength = 0.12f, Damping = 0.6f;
         private const float Steadied = 0.2f;                // the heavy ring, steadied by the hand: it takes the pushes less
 
         private float zenith = 45f;                         // the reading the alidade is left at
@@ -139,17 +139,34 @@ namespace RealisticSkies
             Camera cam = Camera.main;
             float dt = Time.deltaTime;
             if (cam == null || dt <= 0f) return;
+
+            float swayMult = Plugin.configInstrumentSway != null ? Plugin.configInstrumentSway.Value : 1f;
+            if (swayMult <= 0.001f)
+            {
+                swing = swingRate = 0f;
+                haveLast = false;
+                return;
+            }
+
             Vector3 pos = cam.transform.position;
             if (!haveLast) { lastPos = pos; lastVel = Vector3.zero; haveLast = true; return; }
+
             Vector3 vel = (pos - lastPos) / dt;
             Vector3 acc = (vel - lastVel) / dt;
             lastPos = pos;
             lastVel = vel;
-            if (acc.magnitude > 30f || vel.magnitude > 50f) acc = Vector3.zero;     // the world was moved (floating origin)
+
+            if (acc.magnitude > 30f || vel.magnitude > 50f) acc = Vector3.zero;     // floating origin reset
+
+            // Smooth out framerate jitter
+            float alpha = 1f - Mathf.Exp(-dt / 0.06f);
+            acc = Vector3.Lerp(lastVel != Vector3.zero ? acc : Vector3.zero, acc, alpha);
+
             Vector3 along = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
             float a = along.sqrMagnitude > 1e-4f ? Vector3.Dot(acc, along.normalized) : 0f;
+            a *= swayMult;
+
             float w = Mathf.Sqrt(9.81f / PendulumLength);
-            // a few small steps: the swing is quick against the frame
             int n = Mathf.Clamp(Mathf.CeilToInt(dt / 0.005f), 1, 20);
             float h = dt / n;
             for (int i = 0; i < n; i++)

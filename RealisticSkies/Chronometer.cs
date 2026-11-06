@@ -6,11 +6,7 @@ using UnityEngine;
 namespace RealisticSkies
 {
     /// <summary>
-    /// The game's chronometer (ShipItemClock) as the difficulty has it. Perfect: the base game's.
-    /// Imperfect: each one has a number, a rate of its own (minutes gained or lost a day) and a little
-    /// random wander; it runs 56 hours on a winding (the cabin boy winds it, unless the config says
-    /// you do). Relic (Magellan): it runs a few days and then stops for good.
-    /// Its state goes into the save's spare item values: error, number and rate, spring, end of life.
+    /// Chronometer state: works for both ShipItemClock and the Chrono-Compass (ShipItemCompass).
     /// </summary>
     internal class ChronoState : MonoBehaviour
     {
@@ -29,12 +25,25 @@ namespace RealisticSkies
         private double lastTime = -1;
         private bool made;
 
-        internal static ChronoState Of(ShipItemClock clock)
+        internal static bool IsChrono(Component c) => c != null && IsChrono(c.gameObject);
+
+        internal static bool IsChrono(GameObject go)
         {
-            ChronoState s = clock.GetComponent<ChronoState>();
+            if (go == null) return false;
+            if (go.GetComponent<ShipItemClock>() != null) return true;
+            if (go.GetComponent<ShipItemCompass>() is ShipItemCompass sc && sc.chronoLatitude != null) return true;
+            return false;
+        }
+
+        internal static ChronoState Of(Component target) => target != null ? Of(target.gameObject) : null;
+
+        internal static ChronoState Of(GameObject go)
+        {
+            if (go == null) return null;
+            ChronoState s = go.GetComponent<ChronoState>();
             if (s == null)
             {
-                s = clock.gameObject.AddComponent<ChronoState>();
+                s = go.AddComponent<ChronoState>();
                 s.New();
             }
             return s;
@@ -108,7 +117,7 @@ namespace RealisticSkies
             if (Sun.sun != null) lastTime = now;
             Keeping k = Mode.Chronometers;
             if (k == Keeping.Relic && deathAt <= 0 && sold) deathAt = now + UnityEngine.Random.Range(2f, 5f) * 24f;
-            if (dt <= 0 || !sold || k == Keeping.Perfect) return;      // in a shop it is kept right
+            if (dt <= 0 || !sold || k == Keeping.Perfect) return;
             if (dt > 24 * 365) dt = 24 * 365;
 
             float run;
@@ -142,7 +151,6 @@ namespace RealisticSkies
             return true;
         }
 
-        /// <summary>The watchmaker's work: right to the second, wound, and a much smaller rate. Returns the rate he measured.</summary>
         internal float Regulate()
         {
             Advance(true);
@@ -153,7 +161,7 @@ namespace RealisticSkies
             return rate;
         }
 
-        /// <summary>The sold chronometers within reach of a point.</summary>
+        /// <summary>The sold chronometers (clocks and chrono-compasses) within reach.</summary>
         internal static List<ChronoState> Near(Vector3 at, float within)
         {
             var list = new List<ChronoState>();
@@ -161,6 +169,11 @@ namespace RealisticSkies
             {
                 if (!c.sold || Vector3.Distance(c.transform.position, at) > within) continue;
                 list.Add(Of(c));
+            }
+            foreach (ShipItemCompass compass in UnityEngine.Object.FindObjectsOfType<ShipItemCompass>())
+            {
+                if (!compass.sold || compass.chronoLatitude == null || Vector3.Distance(compass.transform.position, at) > within) continue;
+                list.Add(Of(compass));
             }
             list.Sort((a, b) => Vector3.Distance(a.transform.position, at).CompareTo(Vector3.Distance(b.transform.position, at)));
             return list;
@@ -172,17 +185,14 @@ namespace RealisticSkies
     {
         private static readonly AccessTools.FieldRef<LookUI, TextMesh> ExtraText = AccessTools.FieldRefAccess<LookUI, TextMesh>("extraText");
 
-        /// <summary>
-        /// Its number under it when you look at it or hold it: many are nailed down and never picked
-        /// up. Added to the text as it is shown, not written into lookText, so another mod's own
-        /// lookText (the alarm clock's "alarm 06:30") stays and shows above it.
-        /// </summary>
         private static void AddNumber(LookUI ui, Component target)
         {
-            if (Mode.Chronometers == Keeping.Perfect || !(target is ShipItemClock clock) || !clock.sold) return;
+            if (Mode.Chronometers == Keeping.Perfect || !ChronoState.IsChrono(target)) return;
+            ShipItem item = target as ShipItem ?? target.GetComponent<ShipItem>();
+            if (item == null || !item.sold) return;
             TextMesh t = ExtraText(ui);
             if (t == null) return;
-            ChronoState s = ChronoState.Of(clock);
+            ChronoState s = ChronoState.Of(target);
             string number = "No. " + s.serial + (s.Running ? "" : " (stopped)");
             t.text = string.IsNullOrEmpty(t.text) ? number : t.text + "\n" + number;
         }
@@ -193,9 +203,12 @@ namespace RealisticSkies
 
         [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowHoldText))]
         [HarmonyPostfix]
-        private static void NumberOnHold(LookUI __instance, PickupableItem item) => AddNumber(__instance, item);
+        private static void NumberOnHold(LookUI __instance, PickupableItem item)
+        {
+            if (item is ShipItemCompass) return;
+            AddNumber(__instance, item);
+        }
 
-        /// <summary>The hands, from the chronometer's own time when it isn't the base game's perfect one.</summary>
         [HarmonyPatch(typeof(ShipItemClock), "ExtraLateUpdate")]
         [HarmonyPrefix]
         private static bool Hands(ShipItemClock __instance)
@@ -207,21 +220,30 @@ namespace RealisticSkies
             var tr = Traverse.Create(__instance);
             Transform hour = tr.Field("hourHand").GetValue<Transform>();
             Transform minute = tr.Field("minuteHand").GetValue<Transform>();
-            // as the game sets them: 30 degrees an hour, 6 a minute, the minute hand a minute at a time
             if (hour != null) hour.localEulerAngles = new Vector3((float)(t * 30.0) + 90f, -90f, 90f);
             if (minute != null) minute.localEulerAngles = new Vector3((float)(Math.Floor(t * 60.0) * 6.0) + 90f, -90f, 90f);
             return false;
         }
 
-        /// <summary>Winding it yourself, when the cabin boy doesn't.</summary>
+        /// <summary>Winding standard clocks (scroll) or chrono-compass (Ctrl + scroll).</summary>
         [HarmonyPatch(typeof(PickupableItem), "OnScroll")]
         [HarmonyPrefix]
         private static bool Wind(PickupableItem __instance, float input)
         {
-            if (!(__instance is ShipItemClock clock) || !clock.sold || clock.held == null || input <= 0f) return true;
+            if (!ChronoState.IsChrono(__instance)) return true;
+            ShipItem item = __instance as ShipItem;
+            if (item == null || !item.sold || item.held == null || input <= 0f) return true;
+
+            // For chrono-compass, winding is done with Ctrl + Scroll to avoid conflict with latitude tilt
+            if (item is ShipItemCompass)
+            {
+                bool ctrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+                if (!ctrl) return true;
+            }
+
             Keeping k = Mode.Chronometers;
             if (k == Keeping.Perfect) return true;
-            ChronoState s = ChronoState.Of(clock);
+            ChronoState s = ChronoState.Of(item);
             if (s.Dead)
             {
                 NotificationUi.instance.ShowNotification("It has stopped for good: no one aboard can mend it.");
@@ -237,24 +259,27 @@ namespace RealisticSkies
             return false;
         }
 
-        /// <summary>Its number when you pick it up (a label on it would lie over the dial).</summary>
         [HarmonyPatch(typeof(GoPointer), "PickUpItem")]
         [HarmonyPostfix]
         private static void Picked(PickupableItem item)
         {
-            if (!(item is ShipItemClock clock) || !clock.sold || Mode.Chronometers == Keeping.Perfect) return;
-            ChronoState s = ChronoState.Of(clock);
+            if (!ChronoState.IsChrono(item)) return;
+            // Убираем всплывающий свиток с номером для хронокомпаса, чтобы он не закрывал циферблат
+            if (item is ShipItemCompass) return;
+
+            ShipItem si = item as ShipItem;
+            if (si == null || !si.sold || Mode.Chronometers == Keeping.Perfect) return;
+            ChronoState s = ChronoState.Of(item);
             NotificationUi.instance.ShowNotification("Chronometer No. " + s.serial + (s.Running ? "" : " (stopped)"));
         }
 
-        /// <summary>None for sale when the difficulty has none.</summary>
         [HarmonyPatch(typeof(ShopItemSpawner), "SpawnItem")]
         [HarmonyPrefix]
         private static bool Sell(ShopItemSpawner __instance)
         {
             GameObject p = __instance.itemPrefab;
             if (p == null) return true;
-            if (!Mode.SellChronometers && p.GetComponent<ShipItemClock>() != null) return false;
+            if (!Mode.SellChronometers && ChronoState.IsChrono(p)) return false;
             if (!Mode.SellPocketWatches && p.GetComponent<ModItemPocketWatch>() != null) return false;
             if (!Mode.SellQuintants && p.GetComponent<ModItemQuintant>() != null) return false;
             if (Mode.Level == Difficulty.Magellan && p.GetComponent<ModItemLoreScroll>() is ModItemLoreScroll book && book.book == "Modern") return false;
@@ -265,7 +290,7 @@ namespace RealisticSkies
         [HarmonyPostfix]
         private static void Price(ShipItem item, ref int __result)
         {
-            if (item != null && item.GetComponent<ShipItemClock>() != null) __result = Mathf.RoundToInt(__result * Mode.ChronometerPrice);
+            if (ChronoState.IsChrono(item)) __result = Mathf.RoundToInt(__result * Mode.ChronometerPrice);
         }
 
         [HarmonyPatch(typeof(SaveablePrefab), "PrepareSaveData")]
@@ -281,10 +306,8 @@ namespace RealisticSkies
         [HarmonyPostfix]
         private static void Load(SaveablePrefab __instance, SavePrefabData data)
         {
-            if (data == null) return;
-            ShipItemClock clock = __instance.GetComponent<ShipItemClock>();
-            if (clock == null) return;
-            ChronoState s = clock.GetComponent<ChronoState>() ?? clock.gameObject.AddComponent<ChronoState>();
+            if (data == null || !ChronoState.IsChrono(__instance)) return;
+            ChronoState s = ChronoState.Of(__instance);
             s.Read(data);
         }
     }

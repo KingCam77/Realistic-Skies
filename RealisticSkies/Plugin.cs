@@ -140,6 +140,10 @@ namespace RealisticSkies
                                          "Journal Keeps Time By The Glass",
                                          false,
                                          "Custom difficulty only. As in the Magellan difficulty: a lunar distance sets the ship's watch glass, which then strikes the hours by your reckoning, and the Navigator's Journal takes the time of each sight from it instead of from the pocket watch.");
+										 
+			configInstrumentSway = Config.Bind("Instruments", "Instrument Sway", 1.0f,
+										new ConfigDescription("How much ship roll and wave motion swings the quadrant plumb line and astrolabe: 1 = normal, 0.5 = halved, 0 = completely steady (no swing).", 
+										new AcceptableValueRange<float>(0f, 1f)));
 
             configLunarKey = Config.Bind("General",
                                          "Lunar Mode Key",
@@ -276,6 +280,8 @@ namespace RealisticSkies
         internal static ConfigEntry<Difficulty> configDifficulty;
         internal static ConfigEntry<Keeping> configChronometers, configPocketWatches;
         internal static ConfigEntry<bool> configCabinBoy, configRateJumps, configJournalGlassTime;
+		
+		internal static ConfigEntry<float> configInstrumentSway;
 
         internal static ConfigEntry<bool> configMoonRework;
 

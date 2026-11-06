@@ -32,16 +32,18 @@ namespace RealisticSkies
     }
 
     /// <summary>
-    /// The quadrant's plumb line, a light bob on a long thread: it swings with the ship's motion and
-    /// settles slowly, where the game's hangs dead plumb. In harbour it hardly matters; at
-    /// sea the line wanders a few degrees, and you clamp it when it passes the middle. (The heavy
-    /// astrolabe swings less and settles quicker: the deck instrument.)
+    /// The quadrant's plumb line, a light bob on a thread: it swings with the ship's motion and
+    /// settles reasonably, stabilized against FPS delta spikes and hand-steadied.
     /// </summary>
     internal class QuadrantPlumb : MonoBehaviour
     {
-        private const float Length = 0.30f, Damping = 0.05f;
+        private const float Length = 0.30f;
+        private const float Damping = 0.28f;
+        private const float Steadied = 0.35f;      // Arm/hand dampening factor
+
         private float swing, rate;
         private Vector3 lastPos, lastVel;
+        private Vector3 smoothAcc;
         private bool haveLast;
 
         internal float SwingDeg => swing * Mathf.Rad2Deg;
@@ -50,28 +52,67 @@ namespace RealisticSkies
         {
             float dt = Time.deltaTime;
             if (cam == null || dt <= 0f) return;
+
             Vector3 pos = cam.transform.position;
-            if (!haveLast) { lastPos = pos; lastVel = Vector3.zero; haveLast = true; return; }
-            Vector3 vel = (pos - lastPos) / dt, acc = (vel - lastVel) / dt;
-            lastPos = pos; lastVel = vel;
-            if (acc.magnitude > 30f || vel.magnitude > 50f) acc = Vector3.zero;       // the world was moved (floating origin)
+            if (!haveLast)
+            {
+                lastPos = pos;
+                lastVel = Vector3.zero;
+                smoothAcc = Vector3.zero;
+                haveLast = true;
+                return;
+            }
+
+            // Estimate velocity and raw acceleration
+            Vector3 vel = (pos - lastPos) / dt;
+            Vector3 rawAcc = (vel - lastVel) / dt;
+            lastPos = pos;
+            lastVel = vel;
+
+            // Handle teleportation / floating origin reset
+            if (rawAcc.magnitude > 30f || vel.magnitude > 50f)
+            {
+                rawAcc = Vector3.zero;
+                smoothAcc = Vector3.zero;
+            }
+
+            // Low-pass filter to remove framerate-dependent delta-time spikes (cutoff ~ 0.06s)
+            float alpha = 1f - Mathf.Exp(-dt / 0.06f);
+            smoothAcc = Vector3.Lerp(smoothAcc, rawAcc, alpha);
+
+            // Project acceleration along instrument's line of sight
             Vector3 along = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
-            float a = along.sqrMagnitude > 1e-4f ? Vector3.Dot(acc, along.normalized) : 0f;
+            float a = along.sqrMagnitude > 1e-4f ? Vector3.Dot(smoothAcc, along.normalized) : 0f;
+
+            // Apply configurable sway scale
+            float swayMultiplier = Plugin.configInstrumentSway != null ? Plugin.configInstrumentSway.Value : 1f;
+            a *= swayMultiplier;
+
+            if (swayMultiplier <= 0.001f)
+            {
+                Settle();
+                return;
+            }
+
             float w = Mathf.Sqrt(9.81f / Length);
             int n = Mathf.Clamp(Mathf.CeilToInt(dt / 0.005f), 1, 20);
             float h = dt / n;
+
             for (int i = 0; i < n; i++)
             {
-                float accel = -w * w * Mathf.Sin(swing) - 2f * Damping * w * rate - a / Length;
+                // Semi-implicit integration with hand stabilization factor
+                float accel = -w * w * Mathf.Sin(swing) - 2f * Damping * w * rate - (Steadied * a) / Length;
                 rate += accel * h;
                 swing += rate * h;
             }
+
             swing = Mathf.Clamp(swing, -0.35f, 0.35f);
         }
 
         internal void Settle()
         {
             swing = rate = 0f;
+            smoothAcc = Vector3.zero;
             haveLast = false;
         }
     }
@@ -91,6 +132,7 @@ namespace RealisticSkies
             pl.Step(Camera.main);
             Transform dial = t.Field("dial").GetValue<Transform>();
             if (dial == null) return;
+
             // the game has just set the line plumb: tip it by the swing
             Vector3 e = dial.localEulerAngles;
             float x = e.x > 180f ? e.x - 360f : e.x;

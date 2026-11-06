@@ -250,7 +250,7 @@ namespace RealisticSkies
 
         internal static int Price(ShipItem item, int region)
         {
-            float raw = Mathf.Max(1f, item.value * PriceShare * (item is ShipItemClock ? Mode.ChronometerPrice : 1f));
+            float raw = Mathf.Max(1f, item.value * PriceShare * (ChronoState.IsChrono(item) ? Mode.ChronometerPrice : 1f));
             try
             {
                 return CurrencyMarket.instance.GetBuyPriceInCurrency((Currency)region, raw, false);
@@ -287,31 +287,39 @@ namespace RealisticSkies
             var job = item.gameObject.GetComponent<RepairJob>() ?? item.gameObject.AddComponent<RepairJob>();
             job.island = npc.island;
             job.readyAt = NavMath.NowAbs + WorkHours;
-            job.Lay(pos, rot);
+
+            // Вычисляем наклон: часы кладем штатно, а компас доворачиваем на -90 по X, чтобы лег плашмя
+            Quaternion layRot = rot;
+            if (item is ShipItemCompass)
+            {
+                layRot = rot * Quaternion.Euler(-90f, 0f, 0f);
+            }
+
+            job.Lay(pos, layRot);
+
             if (item is ModItemPocketWatch w)
             {
                 w.Regulate();
                 NavJournal.WatchRegulated();
             }
-            else if (item is ShipItemClock clock)
+            else if (ChronoState.IsChrono(item))
             {
-                ChronoState cs = ChronoState.Of(clock);
+                ChronoState cs = ChronoState.Of(item);
                 float rate = cs.Regulate();
                 NavJournal.Certificate(cs.serial, NavMath.NowAbs, rate);
-                // its dial, like the watch's, faces its -z: laid as the watch is, dial up, it rests on
-                // its base; lifted by half its depth so the box sits on the stall instead of in it
-                // (measured on the model as laid: its lowest point goes to the stall's top, where the watch lay)
-                job.Lay(pos, rot);
+
                 bool any = false;
                 Bounds wb = default(Bounds);
-                foreach (Renderer r in clock.GetComponentsInChildren<Renderer>())
+                foreach (Renderer r in item.GetComponentsInChildren<Renderer>())
                 {
                     if (!r.enabled || r is ParticleSystemRenderer) continue;
                     if (!any) { wb = r.bounds; any = true; }
                     else wb.Encapsulate(r.bounds);
                 }
-                if (any) job.Lay(pos + Vector3.up * (pos.y - wb.min.y + 0.002f), rot);
+                // Приподнимаем на толщину корпуса, чтобы предмет лежал строго на крышке стола
+                if (any) job.Lay(pos + Vector3.up * (pos.y - wb.min.y + 0.002f), layRot);
             }
+
             NotificationUi.instance.ShowNotification("The watchmaker will have it ready at " + LocalClock(job.readyAt));
             Debug.Log("RealisticSkies: watchmaker on island " + npc.island + " took " + item.name + " for " + price + ", ready at " + job.readyAt.ToString("F2", CultureInfo.InvariantCulture));
         }
@@ -948,7 +956,7 @@ namespace RealisticSkies
             BuyItemUI ui = BuyItemUI.instance;
             if (ui.activeItem == null && item.held != null)
             {
-                bool takes = (item is ModItemPocketWatch && Mode.PocketWatches != Keeping.Dead) || (item is ShipItemClock && Mode.Chronometers == Keeping.Imperfect);
+                bool takes = (item is ModItemPocketWatch && Mode.PocketWatches != Keeping.Dead) || (ChronoState.IsChrono(item) && Mode.Chronometers == Keeping.Imperfect);
                 if (!takes || !item.sold || item.GetComponent<RepairJob>() != null) return;
                 int reg = Region;
                 if (reg < 0) return;
@@ -1233,7 +1241,7 @@ namespace RealisticSkies
         {
             RepairJob job = __instance.GetComponent<RepairJob>();
             if (job == null || __result == null) return;
-            if (__instance.GetComponent<ShipItemClock>() != null)
+            if (ChronoState.IsChrono(__instance))
             {
                 __result.extraValue4 = (float)job.readyAt;      // the chronometer's own state has the others
                 return;
@@ -1249,7 +1257,7 @@ namespace RealisticSkies
             if (data == null || __instance.GetComponent<RepairJob>() != null) return;
             int island;
             double readyAt;
-            if (__instance.GetComponent<ShipItemClock>() != null && data.extraValue4 > 0f)
+            if (ChronoState.IsChrono(__instance) && data.extraValue4 > 0f)
             {
                 island = -1;            // found by where it lies
                 readyAt = data.extraValue4;
