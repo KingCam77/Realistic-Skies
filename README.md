@@ -336,8 +336,8 @@ The game's chrono-compass is a chronometer too now, and it can be set for the re
 
 ##### Finding Dec and EoT in the Almanac
 Open the Almanac at today's date and look at the Sun table on the right page, row 12 (noon):
-- **Dec:** read the DEC column. For example `16°30'` → Shift + scroll to `16.5° N`.
-- **EoT:** read the AHA column. Without the equation of time the noon AHA would be exactly `000°` (or `360°`); the difference is the equation of time. For example `356°00'` is 4° off → Alt + scroll to `4.0°`.
+- **Dec:** read the DEC column. For example `7°30'` → Shift + scroll to `7.5° N`.
+- **EoT:** read the AHA column. Without the equation of time the noon AHA would be exactly `000°` (or `360°`); the difference is the equation of time. For example `356°00'` is 4° off → Alt + scroll to `-4.0°`.
 
 #### Planisphere
 The Planisphere is a more advanced star map, showing you what is visible and any current time in an easier to read projection. It is only found at Kicia Bay Observatory.\
