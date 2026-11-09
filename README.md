@@ -409,7 +409,7 @@ Hold `Shift + right click` with the Astrolabe, Jacob's Staff, Ring Dial, Star Ma
 - Study Zoom: *how close it comes, in percent of its usual size. Default = 250*
 
 ### Lamp hooks
-The quintant, the cross-staff, the astrolabe, the nocturnal and the traverse board can hang on lamp hooks.
+The quintant, the cross-staff, the Ring Dial, the astrolabe, the nocturnal and the traverse board can hang on lamp hooks.
 
 ## Compatibility
 Realistic Skies works with these mods, and adjusts them by itself when they are installed:
