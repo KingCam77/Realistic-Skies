@@ -358,7 +358,7 @@ In **Automatic** mode (the default) the board keeps itself while you are aboard:
 ##### Controls
 - `Right click` with empty hands: *bring the view up to the board; the mouse moves over it*
 - `Click` a hole: *put that period's peg in, or pull it out*
-- `hift + click` the hub: *pull every peg*
+- `Shift + click` the hub: *pull every peg*
 - `Click` it with the journal in hand: *copy the board into the journal's Traverse page*
 
 ##### Config Options
