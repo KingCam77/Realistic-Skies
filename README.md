@@ -1,10 +1,28 @@
 # Realistic Skies
 
-A complete overhaul of the skies in Sailwind adding more depth, realism, and interaction to stars.
+A complete overhaul of the skies and navigation in Sailwind adding more depth, realism, and interaction to stars.
 
-*Version 2.3.0F-2 is a fork of [KingCam77's Realistic Skies](https://github.com/KingCam77/Realistic-Skies), made with his permission. It adds navigation by the Sun and the Moon, lunar distances, seasons, sailors' constellations and their legends, and the instruments of the old navigators, from the cross-staff to the chronometer.
+*Version 2.3.0F-4 is a fork of [KingCam77's Realistic Skies](https://github.com/KingCam77/Realistic-Skies), made with his permission. It adds navigation by the Sun and the Moon, lunar distances, seasons, sailors' constellations and their legends, and the instruments of the old navigators, from the cross-staff to the chronometer.
 
 <img width="2344" height="1439" alt="image" src="https://github.com/user-attachments/assets/03c9f2bc-2c1d-4061-bfab-828deabe0dd1" />
+
+## Contents
+- [Getting started](#getting-started)
+- [Difficulty](#difficulty)
+- [Sky](#sky)
+  - [Brand New Skybox](#brand-new-skybox) · [Moon](#moon) · [Seasons](#seasons) · [Constellations and Legends](#constellations-and-legends) · [Star Labels](#star-labels-training) ([reading atlas designations](#reading-atlas-designations)) · [Zodiacal Light](#zodiacal-light) · [Planets](#planets)
+- [Navigating by the Sun and the Moon](#navigating-by-the-sun-and-the-moon)
+  - [Lunar distances](#lunar-distances)
+- [Locations](#locations)
+  - [The watchmaker](#the-watchmaker) · [Kicia Bay Observatory](#kicia-bay-observatory) ([telescope](#telescope))
+- [Items](#items)
+  - **[Books and charts](#books-and-charts):** [Almanac](#almanac) · [Navigator's Journal](#navigators-journal) · [Star Map](#star-map) · [The Navigator's Companion and The Modern Navigator](#the-navigators-companion-and-the-modern-navigator) · [Sea Legends](#sea-legends)
+  - **[Taking the height](#taking-the-height):** [Quintant](#quintant) · [Quadrant](#quadrant) · [Cross-staff](#cross-staff) · [Mariner's astrolabe](#mariners-astrolabe) · [Sun compass](#sun-compass)
+  - **[Keeping time](#keeping-time):** [Nocturnal](#nocturnal) · [Ring dial](#ring-dial) · [Half-Hour Glass and Hour Glass](#half-hour-glass-and-hour-glass) · [Watch Glass](#watch-glass) · [Pocket Watch](#pocket-watch) · [Chronometers](#chronometers) · [Chrono-compass](#chrono-compass) · [Planisphere](#planisphere)
+  - **[Dead reckoning](#dead-reckoning):** [Traverse board](#traverse-board)
+  - [A steady hand](#a-steady-hand) · [Studying an imet](#studying-an-item) · [Lamp hooks](#lamp-hooks)
+- [Compatibility](#compatibility)
+
 
 ## Getting started
 
@@ -128,9 +146,6 @@ Realistic Skies adds three merchants at each of the capital cities and one speci
 ### The watchmaker
 An old craftsman with a small stall in each capital, there from 7:00 to 18:00. Hold out a pocket watch or a chronometer to him and he offers to regulate it for about a third of its price. Four hours later it is back on his stall: right to the second, wound, and keeping much better time. For a chronometer he writes a certificate into your journal.
 
-##### Config Options
-- Watchmaker Look: *how he looks, in the format of the Sailwind Player Model mod's Character line. Empty = the default old craftsman*
-
 ### Kicia Bay Observatory
 Kicia Bay Observatory is a unique location built on the mountain next to Kicia Bay. Here is where the more niche instruments can be found that can be useful but not required.
 
@@ -156,6 +171,7 @@ About 130 crowns. Carry it, in hand or in a pocket, and your instruments write e
 - **Lunar distance:** the time at the zero meridian, and how far off your watch is. One click sets the watch, or the ship's glass, by it.
 - **Sights:** every height is a line. Name the body and say whether it stood east or west of you, and you get your latitude and longitude.
 - **Chronometers:** each chronometer's error and rate, from the watchmaker's certificate or from comparing it with your watch.
+- **Traverse:** hold the journal and click a traverse board to copy its pegs in. It lists each two-hour leg and works out the course and distance made good, the difference of latitude and the departure.
 - **Notes:** free writing; the nocturnal's readings and today's date go here too.
 
 The journal works out sums only with an Almanac at hand: held, in a pocket, or lying within a few steps. It takes your word for everything, so name the wrong star or side and you get the wrong position.
@@ -178,7 +194,7 @@ The Star Map is a map of the heavens: a chart of each pole and a band along the 
 
 #### The Navigator's Companion and The Modern Navigator
 Two illustrated manuals that teach the instruments step by step:
-- **The Navigator's Companion** (about 150 crowns, every difficulty): the Almanac, the journal, the glasses, the quadrant, the astrolabe, the cross-staff, lunar distances and the nocturnal.
+- **The Navigator's Companion** (about 150 crowns, every difficulty): the Almanac, the journal, the glasses, the quadrant, the astrolabe, the cross-staff, lunar distances, the nocturnal and the ring dial.
 - **The Modern Navigator** (about 200 crowns, not sold in Magellan): the quintant, the pocket watch, the chronometers and the watchmaker.
 
 #### Sea Legends
@@ -223,7 +239,7 @@ About 90 crowns: a heavy brass ring that hangs straight from your thumb, with a 
 - The Sun: *never look at it. Turn your back to the Sun and look down at the instrument. The sunlight through the upper hole falls on the lower vane as a bright spot: bring it onto the lower hole, with an even ring of light around it, and let go. It works like a mirror: look lower and the spot climbs*
 
 #### Sun compass
-The game's sun compass reads your latitude from the noon shadow, but its scale assumes the Sun stands on the equator. With the seasons on, scroll while holding it to set it for the day's declination of the Sun from the Almanac (Shift: finely), and it reads true again.
+The game's sun compass reads your latitude from the noon shadow, but its rings assume the Sun stands on the equator. The shadow really shows how far the Sun stands from straight overhead. With the seasons on, that is your latitude minus the Sun's declination: add the noon declination from the Almanac's sun table (north positive) to the reading and you have your latitude.
 
 ### Keeping time
 
@@ -234,6 +250,14 @@ The night clock, about 50 crowns: a brass plate with a toothed hour disc and a l
 - Scroll: *set the night's date (after midnight it is still the evening's date)*
 - Hold right click: *raise it, handle down, with the North Star in the hole*
 - Scroll while raised: *swing the arm until its edge touches Corvin (Shift: finely), then let go*
+
+#### Ring dial
+The daytime twin of the nocturnal, about 155 crowns: a brass sundial of two rings that works anywhere. Set your latitude and the date, hang it up, turn it until the spot of sunlight through its pinhole sits on the middle line, and read your sun time. Once it is on the line, the dial also points true north. It can't be read near noon or for a couple of days at the equinoxes. It needs the seasons: in Vanilla the Sun never leaves the equator, the inner ring always shades the hole, and it shows no spot.
+
+##### Controls
+- Scroll: *set the latitude*; Shift + scroll: *set the date*; Shift + right click: *look it over closely*
+- Right click: *unfold it before you (face north first), or fold it again*; scroll while open: *turn it (Shift: finely)*
+- Hold right click while open: *look closely and turn it finely with the mouse until the spot sits on the line, then let go*
 
 #### Half-Hour Glass and Hour Glass
 About 100 and 150 crowns. Turn one over and the sand runs for half an hour or an hour of game time, and a bell strikes when it runs out. Take a sight, turn the glass at once, and work out the sums at your leisure: you know exactly how much later the bell rang. A glass lying on its side stops; in your pocket it keeps running.
@@ -261,7 +285,22 @@ Model: [Pocket Watch](https://polyhaven.com/a/pocket_watch) by PierreB3D, Poly H
 - Scroll while at your eye: *sets the minute hand (Shift: the hour hand)*
 
 #### Chronometers
-Every chronometer has its own number (look at it to see which), its own rate and a little wander. Carry two or three and compare them in the journal. Only the watchmaker can regulate one.
+Every chronometer has its own number, engraved on its dial as real makers did, its own rate and a little wander. Carry two or three and compare them in the journal. Only the watchmaker can regulate one.
+
+#### Chrono-compass
+The game's chrono-compass is a chronometer too now, and it can be set for the real Sun instead of the vanilla one that always stands on the equator at 12:00.
+- **A chronometer like the others:** its number is engraved on its bottom. It gains or loses at its own rate with a little wander, runs 56 hours on a winding and stops when it runs down. The watchmaker regulates it and writes its certificate, and it shows up on the journal's Chronometers page. It is not sold in Magellan, and it costs as much as the other chronometers.
+- **Sun's declination** sets its latitude scale, and the **equation of time** sets its clock to the real Sun, so it gives true latitude and longitude in every season.
+
+##### Controls
+- Shift + scroll: *set the Sun's declination (Dec), in steps of half a degree*
+- Alt + scroll: *set the equation of time (EoT), in steps of half a degree*
+- Shift + Alt + scroll: *wind it (when the cabin boy doesn't)*
+
+##### Finding Dec and EoT in the Almanac
+Open the Almanac at today's date and look at the Sun table on the right page, row 12 (noon):
+- **Dec:** read the DEC column. For example `16°30'` → Shift + scroll to `16.5° N`.
+- **EoT:** read the AHA column. Without the equation of time the noon AHA would be exactly `000°` (or `360°`); the difference is the equation of time. For example `356°00'` is 4° off → Alt + scroll to `4.0°`.
 
 #### Planisphere
 The Planisphere is a more advanced star map, showing you what is visible and any current time in an easier to read projection. It is only found at Kicia Bay Observatory.\
@@ -272,6 +311,23 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 - Click: *this rotates the planisphere to the south side*
 - Scroll while rotated: *this advances or decreases the rotation by a fine tuning amount that can reach any day or hour combination*
 
+### Dead reckoning
+
+#### Traverse board
+About 25 crowns: the painted board the helmsman kept by the binnacle. A compass rose with a ring of holes for every two hours of the watch, and a speed grid below it, one row for every two hours by twelve knots. Each peg hangs on a cord and swings with the ship. Peg the course steered and the speed the chip log reads for each two hours; at the end of the watch, copy the board into the journal and it works out where the ship has gone: the course and miles made good, in the same miles the chip log and a ruler on the chart count, and the difference of latitude and longitude in minutes of arc. Hang it on a lamp hook, stick it to any wall or lay it down.
+
+In **Automatic** mode (the default) the board keeps itself while you are aboard: it watches the course steered and the speed over the first hour of every two, and puts the pegs in when that hour is over. A fresh board starts at 00:00 and 12:00 local time. In **Manual** mode you keep it yourself with the compass, the chip log and a sand glass.
+
+##### Controls
+- Right click with empty hands: *bring the view up to the board; the mouse moves over it*
+- Click a hole: *put that period's peg in, or pull it out*
+- Shift + click the hub: *pull every peg*
+- Click it with the journal in hand: *copy the board into the journal's Traverse page*
+
+##### Config Options
+- Mode: *Automatic or Manual. Default = Automatic*
+- Peg Cords: *the pegs hang on cords and swing with the ship; off: a peg out of play sits in its resting hole. Default = true*
+
 ### A steady hand
 While an instrument is at your eye, the view turns slower and the mouse's jitter is smoothed out, so you can hold a star or the Moon's edge.
 
@@ -279,8 +335,23 @@ While an instrument is at your eye, the view turns slower and the mouse's jitter
 - Aim Sensitivity: *how fast the view turns while aiming. Default = 0.5*
 - Aim Smoothing: *how much the mouse is smoothed while aiming; 0 = none. Default = 0.06*
 
+### Studying an item
+Hold **Shift + right click** with the Astrolabe, Jacob's Staff, Ring Dial, Star Map unfolded, the Almanac or the Celestial Atlas open, in your hand: item comes up close to your eye, and moving the mouse glides over them. Let go and it goes back into your hand.
+
+##### Config Options
+- Study Zoom: *how close it comes, in percent of its usual size. Default = 250*
+
 ### Lamp hooks
-The quintant, the cross-staff, the astrolabe and the nocturnal can hang on lamp hooks.
+The quintant, the cross-staff, the astrolabe, the nocturnal and the traverse board can hang on lamp hooks.
+
+## Compatibility
+Realistic Skies works with these mods, and adjusts them by itself when they are installed:
+- **[Climate](https://github.com/bryon82/SailwindClimate):** Climate's seasons, trade winds and the date on the logbook follow this mod's Sun and calendar, so summer weather comes with the summer Sun. Its year length follows this mod's. A new game starts on the autumn equinox, or in the season you pick; a game already begun keeps its date, counted from the autumn equinox.
+- **[RadRefinements](https://github.com/bryon82/SailwindRadRefinements):** its text on the sun compass shows the ring the shadow really falls on, not your true latitude, and its text on a chronometer shows the time on that chronometer's own hands, not the true time. The local time line is left out: the dial doesn't show it.
+- **Sailwind Player Model:** the watchmaker can wear a character written in its format (see *The watchmaker*).
+
+##### Config Options
+- Start Season (Climate mod): *the season a new game begins in, with Climate installed. Autumn is this mod's own start; Winter is where Climate's calendar begins. Default = Autumn*
 
 <br/>
 <br/>
