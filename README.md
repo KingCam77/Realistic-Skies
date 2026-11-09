@@ -272,9 +272,9 @@ About 90 crowns: a heavy brass ring that hangs straight from your thumb, with a 
 #### Sun compass
 The game's sun compass reads your latitude from the noon shadow, but its rings assume the Sun stands on the equator. The shadow really shows how far the Sun stands from straight overhead. With the seasons on, adjust the reading by the Sun's declination from the Almanac:
 - In Autumn & Winter (Dec is negative / South): the Sun sits lower and the shadow stretches, making the compass read higher. Subtract the declination from the reading.
-  -Example: Compass reads `39°`, Almanac shows Dec `−7°` .  True Latitude = `39° − 7°` = `32° N`.
--In Spring & Summer (Dec is positive / North): the Sun sits higher and the shadow is shorter. Add the declination to the reading.
-  -Example: Compass reads `25°`, Almanac shows Dec `+7°`. True Latitude = `25° + 7°` = `32° N`
+  - Example: Compass reads `39°`, Almanac shows Dec `−7°` .  True Latitude = `39° − 7°` = `32° N`.
+- In Spring & Summer (Dec is positive / North): the Sun sits higher and the shadow is shorter. Add the declination to the reading.
+  - Example: Compass reads `25°`, Almanac shows Dec `+7°`. True Latitude = `25° + 7°` = `32° N`
 
 ### Keeping time
 
