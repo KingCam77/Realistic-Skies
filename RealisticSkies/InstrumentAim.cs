@@ -58,6 +58,41 @@ namespace RealisticSkies
                 smoothYaw = smoothNod = 0f;
                 return;
             }
+            if (ModItemTraverseBoard.LookFrozen)
+            {
+                // working a traverse board: the look holds still, and what it would have turned moves the view over the board
+                Transform st = __instance.transform;
+                if (__instance.axes != MouseLook.RotationAxes.MouseY)
+                {
+                    ModItemTraverseBoard.LookTurn(Mathf.DeltaAngle(__state.yaw, st.localEulerAngles.y), 0f);
+                    Vector3 e0 = st.localEulerAngles; e0.y = __state.yaw; st.localEulerAngles = e0;
+                }
+                if (__instance.axes != MouseLook.RotationAxes.MouseX)
+                {
+                    ModItemTraverseBoard.LookTurn(0f, RotationY(__instance) - __state.rotY);
+                    RotationY(__instance) = __state.rotY;
+                    Vector3 e1 = st.localEulerAngles; e1.x = -__state.rotY; st.localEulerAngles = e1;
+                }
+                smoothYaw = smoothNod = 0f;
+                return;
+            }
+            if (ModItemRingDial.LookFrozen)
+            {
+                // sighting the ring dial: the look holds still, and what it would have turned turns the dial
+                Transform st = __instance.transform;
+                if (__instance.axes != MouseLook.RotationAxes.MouseY)
+                {
+                    ModItemRingDial.LookTurn(Mathf.DeltaAngle(__state.yaw, st.localEulerAngles.y));
+                    Vector3 e0 = st.localEulerAngles; e0.y = __state.yaw; st.localEulerAngles = e0;
+                }
+                if (__instance.axes != MouseLook.RotationAxes.MouseX)
+                {
+                    RotationY(__instance) = __state.rotY;
+                    Vector3 e1 = st.localEulerAngles; e1.x = -__state.rotY; st.localEulerAngles = e1;
+                }
+                smoothYaw = smoothNod = 0f;
+                return;
+            }
             if (!InstrumentAim.Active || Plugin.configAimSensitivity == null)
             {
                 smoothYaw = smoothNod = 0f;

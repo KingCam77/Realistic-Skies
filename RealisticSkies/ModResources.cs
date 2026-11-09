@@ -94,6 +94,13 @@ namespace RealisticSkies
             return bundle.LoadAssetAsync<Texture2D>(BundleName(relPath));
         }
 
+        /// <summary>A shader from the bundle, or null (shaders can't be loose files or embedded).</summary>
+        internal static Shader Shader(string relPath)
+        {
+            if (!InBundle(BundleName(relPath))) return null;
+            return bundle.LoadAsset<Shader>(BundleName(relPath));
+        }
+
         /// <summary>A sound from the bundle, or null (the caller then decodes the WAV from Read).</summary>
         internal static AudioClip Audio(string relPath)
         {

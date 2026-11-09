@@ -183,31 +183,7 @@ namespace RealisticSkies
     [HarmonyPatch]
     internal static class ChronometerPatches
     {
-        private static readonly AccessTools.FieldRef<LookUI, TextMesh> ExtraText = AccessTools.FieldRefAccess<LookUI, TextMesh>("extraText");
-
-        private static void AddNumber(LookUI ui, Component target)
-        {
-            if (Mode.Chronometers == Keeping.Perfect || !ChronoState.IsChrono(target)) return;
-            ShipItem item = target as ShipItem ?? target.GetComponent<ShipItem>();
-            if (item == null || !item.sold) return;
-            TextMesh t = ExtraText(ui);
-            if (t == null) return;
-            ChronoState s = ChronoState.Of(target);
-            string number = "No. " + s.serial + (s.Running ? "" : " (stopped)");
-            t.text = string.IsNullOrEmpty(t.text) ? number : t.text + "\n" + number;
-        }
-
-        [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowLookText))]
-        [HarmonyPostfix]
-        private static void NumberOnLook(LookUI __instance, GoPointerButton button) => AddNumber(__instance, button);
-
-        [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowHoldText))]
-        [HarmonyPostfix]
-        private static void NumberOnHold(LookUI __instance, PickupableItem item)
-        {
-            if (item is ShipItemCompass) return;
-            AddNumber(__instance, item);
-        }
+        // The number is engraved on the instrument (ChronoEngraving.cs), not written in the look text.
 
         [HarmonyPatch(typeof(ShipItemClock), "ExtraLateUpdate")]
         [HarmonyPrefix]
@@ -257,20 +233,6 @@ namespace RealisticSkies
                 if (s.runLeft >= ChronoState.MaxRun) NotificationUi.instance.ShowNotification("The chronometer is fully wound.");
             }
             return false;
-        }
-
-        [HarmonyPatch(typeof(GoPointer), "PickUpItem")]
-        [HarmonyPostfix]
-        private static void Picked(PickupableItem item)
-        {
-            if (!ChronoState.IsChrono(item)) return;
-            // Убираем всплывающий свиток с номером для хронокомпаса, чтобы он не закрывал циферблат
-            if (item is ShipItemCompass) return;
-
-            ShipItem si = item as ShipItem;
-            if (si == null || !si.sold || Mode.Chronometers == Keeping.Perfect) return;
-            ChronoState s = ChronoState.Of(item);
-            NotificationUi.instance.ShowNotification("Chronometer No. " + s.serial + (s.Running ? "" : " (stopped)"));
         }
 
         [HarmonyPatch(typeof(ShopItemSpawner), "SpawnItem")]

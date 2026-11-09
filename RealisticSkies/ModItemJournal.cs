@@ -37,6 +37,12 @@ namespace RealisticSkies
             NavJournal.Toggle();
         }
 
+        /// <summary>With the journal in hand, a click on a traverse board copies it in (ModItemTraverseBoard.OnItemClick).</summary>
+        public override bool AllowOnItemClick(GoPointerButton lookedAtButton)
+        {
+            return (base.sold && lookedAtButton.GetComponent<ModItemTraverseBoard>() != null) || base.AllowOnItemClick(lookedAtButton);
+        }
+
         // ---------------- model ----------------
 
         /// <summary>

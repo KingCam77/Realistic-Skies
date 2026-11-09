@@ -25,7 +25,8 @@ namespace RealisticSkies
             if (c is ModItemAlmanac a) return a.sold && a.amount > 0f;
             if (c is ModItemCharts at) return at.sold && at.amount > 0f;
             if (c is ShipItemFoldable f) return f.sold && f.amount <= 0f && IsStarMap(f);
-			if (c is ModItemAstrolabe || c is ModItemCrossStaff || c is ModItemNocturnal) return ((ShipItem)c).sold;
+			if (c is ModItemAstrolabe || c is ModItemCrossStaff || c is ModItemNocturnal || c is ModItemTraverseBoard) return ((ShipItem)c).sold;
+            if (c is ModItemRingDial rd) return rd.sold && !rd.IsOpen;
             return false;
         }
 

@@ -20,7 +20,7 @@ namespace RealisticSkies
     /// </summary>
     internal static class ShopSpots
     {
-        internal const string Scroll = "scroll", Glass30 = "glass30", Glass60 = "glass60", WatchGlass = "watchglass", PocketWatch = "pocketwatch", Journal = "journal", CrossStaff = "crossstaff", Astrolabe = "astrolabe", Nocturnal = "nocturnal", Companion = "companion", Modern = "modern";
+        internal const string Scroll = "scroll", Glass30 = "glass30", Glass60 = "glass60", WatchGlass = "watchglass", PocketWatch = "pocketwatch", Journal = "journal", CrossStaff = "crossstaff", Astrolabe = "astrolabe", Nocturnal = "nocturnal", RingDial = "ringdial", TraverseBoard = "traverse", Companion = "companion", Modern = "modern";
 
         internal struct Spot
         {
@@ -90,7 +90,7 @@ namespace RealisticSkies
             {
                 Astrolabe, new Dictionary<int, Spot>
                 {
-                    { 1, S(1.344f, 1.785f, -0.023f, 0.0001f, -0.9940f, 0.1091f, 0.0010f) },
+                    { 1, S(1.333f, 1.743f, -0.080f, -0.0014f, -0.9985f, 0.0467f, -0.0295f) },
                     { 9, S(-0.795f, 0.513f, 0.499f, -0.0001f, 0.9998f, -0.0051f, -0.0170f) },
                     { 15, S(-0.484f, 0.466f, 0.565f, 0.0000f, 1.0000f, -0.0043f, -0.0036f) },
                 }
@@ -115,7 +115,24 @@ namespace RealisticSkies
                 Modern, new Dictionary<int, Spot>
                 {
                     { 1, S(0.061f, 0.992f, -0.335f, -0.0120f, -0.7958f, 0.6053f, -0.0140f) },
+                    { 9, S(0.550f, 1.031f, -0.415f, 0.0016f, -0.7902f, 0.6128f, -0.0041f) },
                     { 15, S(0.788f, 0.959f, -0.484f, 0.0021f, 0.7558f, -0.6548f, 0.0018f) },
+                }
+            },
+            {
+                RingDial, new Dictionary<int, Spot>
+                {
+                    { 1, S(-0.174f, 0.765f, 0.611f, 0.0201f, 0.7285f, -0.6845f, 0.0171f) },
+                    { 9, S(0.077f, 0.833f, 0.347f, 0.0275f, 0.7148f, -0.6980f, 0.0335f) },
+                    { 15, S(-0.099f, 0.770f, 0.460f, 0.5056f, 0.4989f, -0.4605f, 0.5323f) },
+                }
+            },
+            {
+                TraverseBoard, new Dictionary<int, Spot>
+                {
+                    { 1, S(1.259f, 1.772f, 1.007f, -0.0002f, 0.9994f, 0.0063f, 0.0352f) },
+                    { 9, S(1.428f, 1.783f, 1.022f, 0.0000f, 0.9998f, 0.0223f, -0.0012f) },
+                    { 15, S(0.910f, 2.730f, 0.177f, 0.0002f, 0.9997f, 0.0093f, -0.0214f) },
                 }
             },
         };
@@ -228,6 +245,8 @@ namespace RealisticSkies
             if (it is ModItemCrossStaff) return CrossStaff;
             if (it is ModItemAstrolabe) return Astrolabe;
             if (it is ModItemNocturnal) return Nocturnal;
+            if (it is ModItemRingDial) return RingDial;
+            if (it is ModItemTraverseBoard) return TraverseBoard;
             return null;
         }
 

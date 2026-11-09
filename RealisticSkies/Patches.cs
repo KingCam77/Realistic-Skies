@@ -181,6 +181,8 @@ namespace RealisticSkies
                 ModItemCrossStaff.Register(PrefabsDirectory.instance);
                 ModItemAstrolabe.Register(PrefabsDirectory.instance);
                 ModItemNocturnal.Register(PrefabsDirectory.instance);
+                ModItemRingDial.Register(PrefabsDirectory.instance);
+                ModItemTraverseBoard.Register(PrefabsDirectory.instance);
             }
         }
 

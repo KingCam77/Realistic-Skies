@@ -90,6 +90,17 @@ namespace RealisticSkies
             chronos.Add(n);
             return n;
         }
+        /// <summary>One line copied from a traverse board: a two-hour period of one board (cycle = day * 2 + half).</summary>
+        internal struct TraverseMark
+        {
+            public int cycle, period;
+            public int point;           // -1: no rose peg
+            public int col;             // -1: no grid peg; else knots - 1
+        }
+
+        private static readonly List<TraverseMark> traverse = new List<TraverseMark>();
+        private const int MaxBoards = 20;
+
         private const int MaxSights = 40;
         private static int loadedSlot = -1;
 
@@ -352,6 +363,67 @@ namespace RealisticSkies
             Save();
         }
 
+        /// <summary>
+        /// The ring dial gave the sun time: turned to clock time by the equation of time (the
+        /// navigator's tables do this), then a line in the notes and a rough longitude, as the nocturnal.
+        /// </summary>
+        internal static void NoteRingDial(double apparent, string date)
+        {
+            if (Carried() == null) return;
+            Load();
+            double gmt = double.NaN;
+            string by = "";
+            if (GlassTime)
+            {
+                ModItemWatchGlass g = KeptGlass();
+                if (g != null) { gmt = Celestial.Repeat(g.ReckonedTime, 24.0); by = "the glass"; }
+            }
+            else
+            {
+                ModItemPocketWatch w = Watch();
+                double err = useErr ? NavMath.ParseTime(errText) : 0.0;
+                if (w != null && Mode.PocketWatches != Keeping.Dead && !double.IsNaN(err))
+                {
+                    gmt = Celestial.Repeat(w.ShownHours - err, 24.0);
+                    by = useErr ? "the watch less its error" : "the watch";
+                }
+            }
+            string line = "Day " + GameState.day + ", " + date + ": ring dial " + ModItemNocturnal.Hm(apparent) + " by the Sun";
+            if (!double.IsNaN(gmt))
+            {
+                double mean = apparent - Celestial.EquationOfTime(Celestial.Now) / 15.0;
+                double lon = NavMath.Wrap180((mean - gmt) * 15.0);
+                line += "; " + NavMath.Clock(gmt).Substring(0, 5) + " at the zero meridian by " + by + ": longitude about " +
+                        Math.Abs(lon).ToString("0.0", CultureInfo.InvariantCulture) + "° " + (lon < 0 ? "W" : "E");
+            }
+            AddNote(line);
+            // no pop-up of its own: the ring dial's reading has just been shown
+            Save();
+        }
+
+        /// <summary>
+        /// Lines copied from a traverse board. A line of the same board and period already in the journal
+        /// is replaced (its peg was moved since). The last 20 boards are kept.
+        /// </summary>
+        internal static void NoteTraverse(List<TraverseMark> marks)
+        {
+            Load();
+            foreach (TraverseMark m in marks)
+            {
+                traverse.RemoveAll(x => x.cycle == m.cycle && x.period == m.period);
+                traverse.Add(m);
+            }
+            var cycles = new List<int>();
+            foreach (TraverseMark m in traverse) if (!cycles.Contains(m.cycle)) cycles.Add(m.cycle);
+            cycles.Sort();
+            if (cycles.Count > MaxBoards)
+            {
+                int keepFrom = cycles[cycles.Count - MaxBoards];
+                traverse.RemoveAll(x => x.cycle < keepFrom);
+            }
+            Save();
+        }
+
         private static string AngleField(double deg)
         {
             double tm = Math.Round(Math.Abs(deg) * 60.0, 1);
@@ -399,6 +471,7 @@ namespace RealisticSkies
             tab = 0;
             sights.Clear();
             chronos.Clear();
+            traverse.Clear();
             var noteLines = new List<string>();
             try
             {
@@ -437,6 +510,15 @@ namespace RealisticSkies
                                 var cl = new ChronoLine { serial = serial, t1 = Dbl(c[1]), e1 = Dbl(c[2]), t2 = Dbl(c[3]), e2 = Dbl(c[4]), cert = Dbl(c[5]) };
                                 chronos.Add(cl);
                                 break;
+                            case "trav":
+                                string[] tv = v.Split('|');
+                                if (tv.Length < 4) break;
+                                if (int.TryParse(tv[0], out int tc) && int.TryParse(tv[1], out int tp) && int.TryParse(tv[2], out int tpt) && int.TryParse(tv[3], out int tcol)
+                                    && tp >= 0 && tp < 6 && tpt >= -1 && tpt < 32 && tcol >= -1 && tcol < 12)
+                                {
+                                    traverse.Add(new TraverseMark { cycle = tc, period = tp, point = tpt, col = tcol });
+                                }
+                                break;
                         }
                     }
                 }
@@ -447,7 +529,7 @@ namespace RealisticSkies
             }
             notes = string.Join("\n", noteLines.ToArray());
             if (lunarBody >= Lunar.Stars.Count || lunarBody < Lunar.SunIndex) lunarBody = Lunar.SunIndex;
-            tab = Mathf.Clamp(tab, 0, 3);
+            tab = Mathf.Clamp(tab, 0, 4);
         }
 
         private static double Dbl(string s) =>
@@ -471,6 +553,7 @@ namespace RealisticSkies
                 {
                     lines.Add("chrono=" + c.serial + "|" + Str(c.t1) + "|" + Str(c.e1) + "|" + Str(c.t2) + "|" + Str(c.e2) + "|" + Str(c.cert));
                 }
+                foreach (TraverseMark m in traverse) lines.Add("trav=" + m.cycle + "|" + m.period + "|" + m.point + "|" + m.col);
                 foreach (string l in (notes ?? "").Replace("\r", "").Split('\n')) lines.Add("note=" + l);
                 File.WriteAllLines(FilePath, lines.ToArray());
             }
@@ -621,8 +704,8 @@ namespace RealisticSkies
             GUILayout.BeginHorizontal();
             bool chronoTab = ChronoTab;
             if (!chronoTab && tab == 3) tab = 0;
-            string[] tabs = chronoTab ? new[] { "Lunar distance", "Sights", "Chronometers", "Notes" } : new[] { "Lunar distance", "Sights", "Notes" };
-            int[] ids = chronoTab ? new[] { 0, 1, 3, 2 } : new[] { 0, 1, 2 };
+            string[] tabs = chronoTab ? new[] { "Lunar distance", "Sights", "Chronometers", "Traverse", "Notes" } : new[] { "Lunar distance", "Sights", "Traverse", "Notes" };
+            int[] ids = chronoTab ? new[] { 0, 1, 3, 4, 2 } : new[] { 0, 1, 4, 2 };
             for (int i = 0; i < tabs.Length; i++)
             {
                 if (GUILayout.Button(tabs[i], ids[i] == tab ? sTabOn : sTab, GUILayout.Height(40))) { tab = ids[i]; picking = -1; }
@@ -634,6 +717,7 @@ namespace RealisticSkies
             else if (tab == 0) DrawLunar();
             else if (tab == 1) DrawSights();
             else if (tab == 3) DrawChronometers();
+            else if (tab == 4) DrawTraverse();
             else DrawNotes();
 
             GUI.DragWindow(new Rect(0, 0, 10000, 60));
@@ -1030,11 +1114,97 @@ namespace RealisticSkies
             if (GUILayout.Button("Back", sButton, GUILayout.Width(120))) picking = -1;
         }
 
+        private static Vector2 travScroll;
+
+        /// <summary>
+        /// The traverse boards copied in, newest first: for each, its lines (course, time, speed,
+        /// distance) and what they come to: the course and distance made good, the difference of
+        /// latitude and the departure, and with a latitude above, the difference of longitude.
+        /// </summary>
+        private static void DrawTraverse()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Traverse", sHead, GUILayout.Width(140));
+            GUILayout.Label("Hold the journal and click a traverse board to copy its pegs in.", sSmall);
+            GUILayout.EndHorizontal();
+            var cycles = new List<int>();
+            foreach (TraverseMark m in traverse) if (!cycles.Contains(m.cycle)) cycles.Add(m.cycle);
+            cycles.Sort((a, b) => b.CompareTo(a));
+            double lat = Latitude();
+
+            travScroll = GUILayout.BeginScrollView(travScroll, GUILayout.Height(390));
+            if (cycles.Count == 0) GUILayout.Label("Nothing yet.", sSmall);
+            foreach (int c in cycles)
+            {
+                int day = (int)Math.Floor(c / 2.0);
+                bool pm = c - day * 2 == 1;
+                GUILayout.Label("Day " + day + ", " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(day)) + ", " + (pm ? "afternoon board" : "morning board"), sHead);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Course", sText, GUILayout.Width(200));
+                GUILayout.Label("Time", sText, GUILayout.Width(130));
+                GUILayout.Label("Speed", sText, GUILayout.Width(110));
+                GUILayout.Label("Distance", sText, GUILayout.Width(120));
+                GUILayout.EndHorizontal();
+                var rows = traverse.FindAll(x => x.cycle == c);
+                rows.Sort((a, b) => a.period.CompareTo(b.period));
+                double n = 0.0, e = 0.0;
+                int legs = 0;
+                foreach (TraverseMark m in rows)
+                {
+                    int h0 = 2 * m.period + (pm ? 12 : 0);
+                    int kn = m.col >= 0 ? m.col + 1 : 0;
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(m.point >= 0 ? ModItemTraverseBoard.PointText(m.point) : "—", sResult, GUILayout.Width(200));
+                    GUILayout.Label(h0.ToString("00") + "–" + (h0 + 2).ToString("00"), sResult, GUILayout.Width(130));
+                    GUILayout.Label(kn > 0 ? kn + " kn" : "—", sResult, GUILayout.Width(110));
+                    GUILayout.Label(kn > 0 ? 2 * kn + " nm" : "—", sResult, GUILayout.Width(120));
+                    GUILayout.EndHorizontal();
+                    if (m.point >= 0 && kn > 0)
+                    {
+                        double d = 2.0 * kn, b = m.point * 11.25 * Math.PI / 180.0;
+                        n += d * Math.Cos(b);
+                        e += d * Math.Sin(b);
+                        legs++;
+                    }
+                }
+                if (legs > 0)
+                {
+                    double dist = Math.Sqrt(n * n + e * e);
+                    double brg = Math.Atan2(e, n) * 180.0 / Math.PI;
+                    if (brg < 0) brg += 360.0;
+                    int pt = ((int)Math.Round(brg / 11.25) % 32 + 32) % 32;
+                    string made = "Made good: " + TraverseBoardLayout.PointNames[pt] + " " + Math.Round(brg).ToString("0", CultureInfo.InvariantCulture) + "°, " +
+                                  Math.Round(dist).ToString("0", CultureInfo.InvariantCulture) + " nm.";
+                    // miles are the chip log's (knots x hours), as the cartographer's ruler counts them;
+                    // the differences of latitude and longitude are minutes of arc on the globe
+                    double k = ModItemTraverseBoard.ArcminPerLogMile;
+                    string diff = "Northing " + Math.Round(Math.Abs(n)).ToString("0", CultureInfo.InvariantCulture) + " nm " + (n < 0 ? "S" : "N") +
+                                  ", departure " + Math.Round(Math.Abs(e)).ToString("0", CultureInfo.InvariantCulture) + " nm " + (e < 0 ? "W" : "E") +
+                                  ".   Diff. lat. " + Math.Round(Math.Abs(n * k)).ToString("0", CultureInfo.InvariantCulture) + "′ " + (n < 0 ? "S" : "N");
+                    if (!double.IsNaN(lat) && Math.Abs(lat) < 89.0)
+                    {
+                        double dlong = e * k / Math.Cos(lat * Math.PI / 180.0);
+                        diff += "   Diff. long. " + Math.Round(Math.Abs(dlong)).ToString("0", CultureInfo.InvariantCulture) + "′ " + (dlong < 0 ? "W" : "E") +
+                                " at lat. " + Math.Round(Math.Abs(lat)).ToString("0", CultureInfo.InvariantCulture) + "°";
+                    }
+                    GUILayout.Label("<b>" + made + "</b>", sResult);
+                    GUILayout.Label(diff, sResult);
+                }
+                GUILayout.Space(12);
+            }
+            GUILayout.EndScrollView();
+            if (traverse.Count > 0 && GUILayout.Button("Clear", sButton, GUILayout.Width(120)))
+            {
+                traverse.Clear();
+                Save();
+            }
+        }
+
         private static void DrawNotes()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Notes", sHead, GUILayout.Width(120));
-            GUILayout.Label("Day " + GameState.day + " of the voyage: " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(GameState.day)) +
+            GUILayout.Label("Day " + Calendar.VoyageDay + " of the voyage: " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(GameState.day)) +
                             ", day " + (ModItemNocturnal.DayOfYear(GameState.day) + 1) + " of the year", sSmall);
             GUILayout.EndHorizontal();
             noteScroll = GUILayout.BeginScrollView(noteScroll, GUILayout.Height(400));

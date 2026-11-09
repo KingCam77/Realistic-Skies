@@ -115,7 +115,11 @@ namespace RealisticSkies
             EndSight(false);
         }
 
-        private void OnDestroy() => EndSight(false);
+        private void OnDestroy()
+        {
+            EndSight(false);
+            sunProbe.Dispose();
+        }
 
         public override void ExtraLateUpdate()
         {
@@ -214,6 +218,13 @@ namespace RealisticSkies
             if (cam == null) return;
             // the alidade was turned to where you looked; the ring's vertical was off by its swing
             bool sun = sunSight;
+            if (sun && sunLight < MinSunLight)
+            {
+                // no spot on the vane to bring onto the hole (cloud or shade): nothing taken, and nothing said
+                Debug.Log("RealisticSkies: astrolabe, no spot: light " + sunLight.ToString("0.00") + ", veil " + veil.ToString("0.00") +
+                          ", probe " + sunProbe.Ratio.ToString("0.00"));      // DEBUG: remove before release
+                return;
+            }
             float looked = ModItemCrossStaff.Altitude(sun ? -cam.transform.forward : cam.transform.forward);
             double z = 90.0 - looked;
             if (z < 0.0 || z > 90.0)
@@ -570,8 +581,23 @@ namespace RealisticSkies
             if (!EnsureVaneRig(cam)) return;
             if (!vaneRig.activeSelf) vaneRig.SetActive(true);
             if (vaneLight != null) vaneLight.transform.rotation = cam.transform.rotation * Quaternion.LookRotation(new Vector3(0.45f, -0.6f, 0.65f));
-            DrawSpot(-VaneGap * Mathf.Tan(ox), -VaneGap * Mathf.Tan(oy));
+            // The spot needs the Sun itself (SunExposure.cs): through cloud it grows faint and soft and
+            // goes, and in the shade of a sail, a roof or your own head there is none. The shade is
+            // looked for just above the astrolabe in your hand.
+            veil = SunExposure.Veil();
+            float target = 1f - veil;
+            if (SunProbe.Works && SunExposure.SunDir(out Vector3 sunW))
+            {
+                sunProbe.Tick(base.transform.position + Vector3.up * 0.15f, sunW, base.gameObject.layer, 0.2f);
+                target *= sunProbe.Lit;
+            }
+            sunLight = Mathf.MoveTowards(sunLight, target, Time.deltaTime / 0.3f);
+            DrawSpot(-VaneGap * Mathf.Tan(ox), -VaneGap * Mathf.Tan(oy), sunLight, veil);
         }
+
+        private readonly SunProbe sunProbe = new SunProbe("astrolabe");
+        private float sunLight = 1f, veil;
+        private const float MinSunLight = 0.2f;             // fainter than this: no spot to bring onto the hole, no reading
 
         /// <summary>The Sun's offset from the line through the holes, radians right and up; false when it isn't near.</summary>
         private static bool SunOffset(Camera cam, Vector3 line, out float ox, out float oy)
@@ -714,12 +740,16 @@ namespace RealisticSkies
             return true;
         }
 
-        /// <summary>The spot (centre in mm on the vane, from the hole) redrawn: bright core, soft edge, a faint glow; none in the hole.</summary>
-        private static void DrawSpot(float sx, float sy)
+        /// <summary>
+        /// The spot (centre in mm on the vane, from the hole) redrawn: bright core, soft edge, a faint
+        /// glow; none in the hole. light: how much Sun there is (cloud, shade); veil: the cloud, which
+        /// blurs the Sun's disc and so the spot's edge.
+        /// </summary>
+        private static void DrawSpot(float sx, float sy, float light, float veil)
         {
             if (spotLive == null) return;
-            float blur = VaneGap * Mathf.Tan(SunSemi * Mathf.Deg2Rad);
-            float core = PinR - blur, outer = PinR + blur;
+            float blur = VaneGap * Mathf.Tan(SunSemi * Mathf.Deg2Rad) * (1f + 4f * veil);
+            float core = Mathf.Max(0f, PinR - blur), outer = PinR + blur;
             for (int j = 0; j < SpotNY; j++)
             {
                 float y = Mathf.Lerp(SpotY0, SpotY1, (j + 0.5f) / SpotNY);
@@ -730,7 +760,7 @@ namespace RealisticSkies
                     float d = Mathf.Sqrt(dx * dx + dy * dy);
                     float I = d <= core ? 1f : Mathf.SmoothStep(1f, 0f, (d - core) / (outer - core));
                     float glow = Mathf.Exp(-(d * d) / (outer * outer * 2.2f)) * 0.18f;
-                    float a = Mathf.Max(I, glow);
+                    float a = Mathf.Max(I, glow) * light;
                     Color c = Color.Lerp(new Color(1f, 0.82f, 0.48f), new Color(1f, 0.98f, 0.88f), I);
                     spotPx[j * SpotNX + i] = new Color32((byte)(c.r * 255f), (byte)(c.g * 255f), (byte)(c.b * 255f), (byte)(Mathf.Clamp01(a) * 255f));
                 }

@@ -30,6 +30,8 @@ namespace RealisticSkies
                 ModItemCrossStaff.AddToShop(info.shopPrefab.transform, parentIslandIndex);
                 ModItemAstrolabe.AddToShop(info.shopPrefab.transform, parentIslandIndex);
                 ModItemNocturnal.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemRingDial.AddToShop(info.shopPrefab.transform, parentIslandIndex);
+                ModItemTraverseBoard.AddToShop(info.shopPrefab.transform, parentIslandIndex);
                 Watchmaker.AddToShop(info.shopPrefab.transform, parentIslandIndex);
             }
         }

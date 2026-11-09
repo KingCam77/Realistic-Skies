@@ -10,6 +10,8 @@ using UnityEngine;
 namespace RealisticSkies
 {
     [BepInPlugin(Plugin.PLUGIN_ID, Plugin.PLUGIN_NAME, Plugin.PLUGIN_VERSION)]
+    [BepInDependency(CompatClimate.Guid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(CompatRadRefinements.Guid, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public void Awake()
@@ -17,7 +19,7 @@ namespace RealisticSkies
             Plugin.instance = this;
             Plugin.Log = base.Logger;
             //Plugin.logSource = base.Logger;
-            Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), "com.kingcam16.realisticskies");
+            Harmony harmony = Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), "com.kingcam16.realisticskies");
 
             configStarType = Config.Bind("General",      // The section under which the option is shown
                                          "Star Type",  // The key of the configuration option in the configuration file
@@ -220,7 +222,17 @@ namespace RealisticSkies
                 true,
                 "Pop-up messages from this mod (readings, hints). Off: none of them; the game's own still show. Readings still go into the Navigator's Journal.");
 
+            configTraverseMode = Config.Bind("Traverse Board", "Mode", TraverseMode.Automatic,
+                "Automatic: aboard a boat, the traverse board puts in the pegs for each two hours by itself, from the course steered and the speed, when the first hour of the two is over (you may still move them by hand). Manual: you keep it yourself with the compass, the log and a sand glass.");
+            configPegCords = Config.Bind("Traverse Board", "Peg Cords", true,
+                "The traverse board's pegs hang on cords and swing with the ship. Off: no cords; a peg out of play sits in its resting hole.");
+
+            CompatClimate.Init(harmony, Config);
+            CompatRadRefinements.Init(harmony);
         }
+
+        internal static ConfigEntry<TraverseMode> configTraverseMode;
+        internal static ConfigEntry<bool> configPegCords;
         
         public const string PLUGIN_ID = "com.kingcam16.realisticskies";
 

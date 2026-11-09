@@ -778,7 +778,9 @@ namespace RealisticSkies
             bool quintant = !staff && __instance.GetComponent<ModItemQuintant>() != null;
             bool astrolabe = !staff && !quintant && __instance.GetComponent<ModItemAstrolabe>() != null;
             bool nocturnal = !staff && !quintant && !astrolabe && __instance.GetComponent<ModItemNocturnal>() != null;
-            if (!staff && !quintant && !astrolabe && !nocturnal) return;
+            ModItemRingDial dial = !staff && !quintant && !astrolabe && !nocturnal ? __instance.GetComponent<ModItemRingDial>() : null;
+            bool board = !staff && !quintant && !astrolabe && !nocturnal && dial == null && __instance.GetComponent<ModItemTraverseBoard>() != null;
+            if (!staff && !quintant && !astrolabe && !nocturnal && dial == null && !board) return;
             Collider hook = Traverse.Create(__instance).Field("currentHook").GetValue<Collider>();
             if (hook == null) return;
             Transform h = hook.transform;
@@ -795,6 +797,20 @@ namespace RealisticSkies
                 // plumb by its shackle ring, the scale (its -z) to the room
                 t.rotation = Quaternion.LookRotation(-face, Vector3.up);
                 t.position = at + Vector3.down * 0.01f - t.rotation * ModItemAstrolabe.HangPoint;
+                return;
+            }
+            if (dial != null)
+            {
+                // plumb by its shackle's ring, the shackle up wherever it is set, the engraved face (its -z) to the room
+                t.rotation = Quaternion.LookRotation(-face, Vector3.up) * Quaternion.AngleAxis(dial.Latitude, Vector3.forward);
+                t.position = at + Vector3.down * 0.01f - t.rotation * RingDialMath.HangPoint(dial.Latitude);
+                return;
+            }
+            if (board)
+            {
+                // by the hole in its heart, upright, the painted front (its -z) to the room, the back toward the hook's mount
+                t.rotation = Quaternion.LookRotation(-face, Vector3.up);
+                t.position = at - t.rotation * TraverseBoardLayout.HangPoint;
                 return;
             }
             if (nocturnal)
