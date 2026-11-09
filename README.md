@@ -256,7 +256,7 @@ The game's quadrant, now with a light plumb line that swings with the ship and s
 Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. The nearer the cross-piece is to your eye, the wider the angle between its ends. Use it for heights and lunar distances. It is exactly as true as you lay its ends.
 
 ##### Controls
-- `Scroll`: *slide the cross-piece (Shift: finely)*
+- `Scroll`: *slide the cross-piece (`Shift`: finely)*
 - Hold `right click`: *bring it to your eye. Lay the lower end on the horizon and the upper on the body, and let go*
 - `L`: *lunar distance: right click the Sun or a star, then lay one end on it and the other on the Moon's near edge*
 - `Shift + right click`: *look it over closely*
