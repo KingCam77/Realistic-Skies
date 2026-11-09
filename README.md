@@ -195,6 +195,9 @@ The Almanac is required for celestial navigation. It gives where every body of t
 - `Shift + right click`: *look it over closely*
 
 #### Navigator's Journal
+
+<img width="1344" height="1107" alt="image" src="https://github.com/user-attachments/assets/4b6ecf02-4f72-4c60-865d-79d097f80482" />
+
 About 130 crowns. Carry it, in hand or in a pocket, and your instruments write every reading into it with the time from your watch or glass; you can correct any value. Then sit down with the Almanac and it works out your sights:
 - **Lunar distance:** the time at the zero meridian, and how far off your watch is. One click sets the watch, or the ship's glass, by it.
 - **Sights:** every height is a line. Name the body and say whether it stood east or west of you, and you get your latitude and longitude.
@@ -212,6 +215,9 @@ The journal works out sums only with an Almanac at hand: held, in a pocket, or l
 - Journal Key: *Default = `J`*
 
 #### Star Map
+
+
+
 The Star Map is a map of the heavens: a chart of each pole and a band along the equator, with every constellation drawn in and the bright stars named. It can be found at all of the capital cities but not Kicia Bay Observatory.
 
 ##### Config Options
@@ -237,6 +243,9 @@ A scroll of the sailors' sky, about 280 crowns: every constellation with an engr
 ### Taking the height
 
 #### Quintant
+
+<img width="892" height="900" alt="image" src="https://github.com/user-attachments/assets/b761c956-4d5d-41ec-9131-8f587e9e63a8" />
+
 The Quintant measures heights and lunar distances precisely. It can be found at all of the locations (but not in Magellan). The Quintant is safe to put in your inventory with a reading; it only loses the reading when you start the game again.
 
 ##### Controls
@@ -253,6 +262,9 @@ The Quintant measures heights and lunar distances precisely. It can be found at 
 The game's quadrant, now with a light plumb line that swings with the ship and settles slowly. Right click to pinch the line against the scale, and the height goes into the journal. It reads to a quarter of a degree: a fair instrument in harbour or a calm, a rough one at sea.
 
 #### Cross-staff
+
+<img width="2048" height="1097" alt="image" src="https://github.com/user-attachments/assets/d8b55e7e-5f9d-469f-b5cc-48fc23ef63b0" />
+
 Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. The nearer the cross-piece is to your eye, the wider the angle between its ends. Use it for heights and lunar distances. It is exactly as true as you lay its ends.
 
 ##### Controls
@@ -262,6 +274,9 @@ Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. T
 - `Shift + right click`: *look it over closely*
 
 #### Mariner's astrolabe
+
+<img width="1044" height="1019" alt="image" src="https://github.com/user-attachments/assets/88d94f98-4298-4470-8112-4c930faa9a0a" />
+
 About 90 crowns: a heavy brass ring that hangs straight from your thumb, with a turning arm and a pinhole at each end. It needs no horizon, so it works on the darkest night. At sea it swings with the ship: catch the body as the swing passes the middle. Its scale counts from the top, as the old pilots counted; the journal writes down the height. It reads to ten minutes of arc.
 
 ##### Controls
@@ -279,6 +294,9 @@ The game's sun compass reads your latitude from the noon shadow, but its rings a
 ### Keeping time
 
 #### Nocturnal
+
+<img width="1304" height="1432" alt="image" src="https://github.com/user-attachments/assets/509e447f-7057-4a98-9a53-f4c57bae697e" />
+
 The night clock, about 50 crowns: a brass plate with a toothed hour disc and a long arm. Sight the North Star through the hole in its middle, swing the arm onto **Corvin**, the brightest star of Corvin's Sloop, and read your local time where the arm crosses the disc. You need no horizon and no tables. Compare it with the time at the zero meridian and you have a rough longitude every clear night. Far to the south Corvin sets for part of the night, and then you have to wait for it.
 
 ##### Controls
@@ -288,6 +306,9 @@ The night clock, about 50 crowns: a brass plate with a toothed hour disc and a l
 - `Shift + right click`: *look it over closely*
 
 #### Ring dial
+
+<img width="1526" height="1256" alt="image" src="https://github.com/user-attachments/assets/a4f29e4c-c0c1-42d5-a532-4b549a7e248c" />
+
 The daytime twin of the nocturnal, about 155 crowns: a brass sundial of two rings that works anywhere. Set your latitude and the date, hang it up, turn it until the spot of sunlight through its pinhole sits on the middle line, and read your sun time. Once it is on the line, the dial also points true north. It can't be read near noon or for a couple of days at the equinoxes. It needs the seasons: in Vanilla the Sun never leaves the equator, the inner ring always shades the hole, and it shows no spot.
 
 ##### Controls
@@ -303,6 +324,9 @@ About 100 and 150 crowns. Turn one over and the sand runs for half an hour or an
 - `Right click` / `R` while holding it: *turns the glass over*
 
 #### Watch Glass
+
+<img width="1117" height="1000" alt="image" src="https://github.com/user-attachments/assets/1ca67e19-ca19-496b-98d8-4bc0faad7073" />
+
 About 300 crowns: an hour glass on a heavy stand that turns itself every hour and strikes the bells of the watch: 2, 4, 6, then 8 bells at the end of the watch. Set it on deck (nail it down if the sea is up) and start it at a known hour, or set it by a lunar distance from the journal. It is no clock, though: it wanders a few minutes a day, so set it again from the Moon every few days.
 
 ##### Controls
@@ -312,6 +336,9 @@ About 300 crowns: an hour glass on a heavy stand that turns itself every hour an
 - Watch Glass Wakes Captain: *wake up at eight bells when you sleep aboard. Default = false*
 
 #### Pocket Watch
+
+<img width="1423" height="1165" alt="image" src="https://github.com/user-attachments/assets/8dbc2aae-933f-4380-a95d-dbe2de3020b0" />
+
 The lunarian's deck watch, about 220 crowns, readable to the minute. Every watch gains or loses at its own rate, a few minutes a day, and it stops when it runs down (a winding lasts a day and a half). Find its error from a lunar distance and it carries the time to your next sights.
 
 Model: [Pocket Watch](https://polyhaven.com/a/pocket_watch) by PierreB3D, Poly Haven (CC0).
@@ -351,6 +378,9 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 ### Dead reckoning
 
 #### Traverse board
+
+<img width="950" height="1074" alt="image" src="https://github.com/user-attachments/assets/30a8f779-9bcf-46c9-8240-4c28409bcc51" />
+
 About 25 crowns: the painted board the helmsman kept by the binnacle. A compass rose with a ring of holes for every two hours of the watch, and a speed grid below it, one row for every two hours by twelve knots. Each peg hangs on a cord and swings with the ship. Peg the course steered and the speed the chip log reads for each two hours; at the end of the watch, copy the board into the journal and it works out where the ship has gone: the course and miles made good, in the same miles the chip log and a ruler on the chart count, and the difference of latitude and longitude in minutes of arc. Hang it on a lamp hook, stick it to any wall or lay it down.
 
 In **Automatic** mode (the default) the board keeps itself while you are aboard: it watches the course steered and the speed over the first hour of every two, and puts the pegs in when that hour is over. A fresh board starts at 00:00 and 12:00 local time. In **Manual** mode you keep it yourself with the compass, the chip log and a sand glass.
