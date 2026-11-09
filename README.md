@@ -190,8 +190,9 @@ The Almanac is required for celestial navigation. It gives where every body of t
 **Only works with default star set but any year length**
 
 ##### Controls
-- Click: *this opens the Almanac*
-- Scroll while open: *this changes the current page*
+- `Click`: *this opens the Almanac*
+- `Scroll` while open: *this changes the current page*
+- `Shift + right click`: *look it over closely*
 
 #### Navigator's Journal
 About 130 crowns. Carry it, in hand or in a pocket, and your instruments write every reading into it with the time from your watch or glass; you can correct any value. Then sit down with the Almanac and it works out your sights:
@@ -204,11 +205,11 @@ About 130 crowns. Carry it, in hand or in a pocket, and your instruments write e
 The journal works out sums only with an Almanac at hand: held, in a pocket, or lying within a few steps. It takes your word for everything, so name the wrong star or side and you get the wrong position.
 
 ##### Controls
-- J, or right click / R with it in hand: *opens or closes the journal*
-- Escape: *closes it*
+- `J`, or `right click` / `R` with it in hand: *opens or closes the journal*
+- `Escape`: *closes it*
 
 ##### Config Options
-- Journal Key: *Default = J*
+- Journal Key: *Default = `J`*
 
 #### Star Map
 The Star Map is a map of the heavens: a chart of each pole and a band along the equator, with every constellation drawn in and the bright stars named. It can be found at all of the capital cities but not Kicia Bay Observatory.
@@ -217,7 +218,8 @@ The Star Map is a map of the heavens: a chart of each pole and a band along the 
 - Constellation Star Chart: *use the star chart with the constellation figures instead of the original one. Default = true*
 
 ##### Controls
-- Click: *this opens the star map*
+- `Click`: *this opens the star map*
+- `Shift + right click`: *look it over closely*
 
 #### The Navigator's Companion and The Modern Navigator
 Two illustrated manuals that teach the instruments step by step:
@@ -228,9 +230,9 @@ Two illustrated manuals that teach the instruments step by step:
 A scroll of the sailors' sky, about 280 crowns: every constellation with an engraving of its figure, how to find it and where it points, the names of the stars and planets, and the legends behind them.
 
 ##### Controls (all three scrolls)
-- Click: *opens the scroll*
-- Scroll while open: *turns the pages*
-- Right click / R while holding it: *rolls it up or opens it again*
+- `Click`: *opens the scroll*
+- `Scroll` while open: *turns the pages*
+- `Right click` / `R` while holding it: *rolls it up or opens it again*
 
 ### Taking the height
 
@@ -238,10 +240,10 @@ A scroll of the sailors' sky, about 280 crowns: every constellation with an engr
 The Quintant measures heights and lunar distances precisely. It can be found at all of the locations (but not in Magellan). The Quintant is safe to put in your inventory with a reading; it only loses the reading when you start the game again.
 
 ##### Controls
-- Scroll: *this raises or lowers the crosshairs and declutter "shades"*
-- Click: *this takes a reading/inspects the quintant*
-- Scroll while inspecting: *this raises or lowers the actual shades*
-- L: *lunar distance mode: click a star or the Sun to lock onto it, then bring the edge of the Moon to it and click*
+- `Scroll`: *this raises or lowers the crosshairs and declutter "shades"*
+- `Click`: *this takes a reading/inspects the quintant*
+- `Scroll` while inspecting: *this raises or lowers the actual shades*
+- `L`: *lunar distance mode: click a star or the Sun to lock onto it, then bring the edge of the Moon to it and click*
 
 ##### Config Options
 - Quintant Help: *how much of the reading is shown in text: None, Arc (arc-minutes), Sec (minutes and seconds) or Full (angle and time). Default = Arc*
@@ -254,19 +256,25 @@ The game's quadrant, now with a light plumb line that swings with the ship and s
 Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. The nearer the cross-piece is to your eye, the wider the angle between its ends. Use it for heights and lunar distances. It is exactly as true as you lay its ends.
 
 ##### Controls
-- Scroll: *slide the cross-piece (Shift: finely)*
-- Hold right click: *bring it to your eye. Lay the lower end on the horizon and the upper on the body, and let go*
-- L: *lunar distance: right click the Sun or a star, then lay one end on it and the other on the Moon's near edge*
+- `Scroll`: *slide the cross-piece (Shift: finely)*
+- Hold `right click`: *bring it to your eye. Lay the lower end on the horizon and the upper on the body, and let go*
+- `L`: *lunar distance: right click the Sun or a star, then lay one end on it and the other on the Moon's near edge*
+- `Shift + right click`: *look it over closely*
 
 #### Mariner's astrolabe
 About 90 crowns: a heavy brass ring that hangs straight from your thumb, with a turning arm and a pinhole at each end. It needs no horizon, so it works on the darkest night. At sea it swings with the ship: catch the body as the swing passes the middle. Its scale counts from the top, as the old pilots counted; the journal writes down the height. It reads to ten minutes of arc.
 
 ##### Controls
-- Hold right click: *raise it to your eye and bring the star into the holes, then let go*
+- Hold `right click`: *raise it to your eye and bring the star into the holes, then let go*
+- `Shift + right click`: *look it over closely*
 - The Sun: *never look at it. Turn your back to the Sun and look down at the instrument. The sunlight through the upper hole falls on the lower vane as a bright spot: bring it onto the lower hole, with an even ring of light around it, and let go. It works like a mirror: look lower and the spot climbs*
 
 #### Sun compass
-The game's sun compass reads your latitude from the noon shadow, but its rings assume the Sun stands on the equator. The shadow really shows how far the Sun stands from straight overhead. With the seasons on, that is your latitude minus the Sun's declination: add the noon declination from the Almanac's sun table (north positive) to the reading and you have your latitude.
+The game's sun compass reads your latitude from the noon shadow, but its rings assume the Sun stands on the equator. The shadow really shows how far the Sun stands from straight overhead. With the seasons on, adjust the reading by the Sun's declination from the Almanac:
+- In Autumn & Winter (Dec is negative / South): the Sun sits lower and the shadow stretches, making the compass read higher. Subtract the declination from the reading.
+  -Example: Compass reads `39°`, Almanac shows Dec `−7°` .  True Latitude = `39° − 7°` = `32° N`.
+-In Spring & Summer (Dec is positive / North): the Sun sits higher and the shadow is shorter. Add the declination to the reading.
+  -Example: Compass reads `25°`, Almanac shows Dec `+7°`. True Latitude = `25° + 7°` = `32° N`
 
 ### Keeping time
 
@@ -274,29 +282,31 @@ The game's sun compass reads your latitude from the noon shadow, but its rings a
 The night clock, about 50 crowns: a brass plate with a toothed hour disc and a long arm. Sight the North Star through the hole in its middle, swing the arm onto **Corvin**, the brightest star of Corvin's Sloop, and read your local time where the arm crosses the disc. You need no horizon and no tables. Compare it with the time at the zero meridian and you have a rough longitude every clear night. Far to the south Corvin sets for part of the night, and then you have to wait for it.
 
 ##### Controls
-- Scroll: *set the night's date (after midnight it is still the evening's date)*
-- Hold right click: *raise it, handle down, with the North Star in the hole*
-- Scroll while raised: *swing the arm until its edge touches Corvin (Shift: finely), then let go*
+- `Scroll`: *set the night's date (after midnight it is still the evening's date)*
+- Hold `right click`: *raise it, handle down, with the North Star in the hole*
+- `Scroll` while raised: *swing the arm until its edge touches Corvin (`Shift`: finely), then let go*
+- `Shift + right click`: *look it over closely*
 
 #### Ring dial
 The daytime twin of the nocturnal, about 155 crowns: a brass sundial of two rings that works anywhere. Set your latitude and the date, hang it up, turn it until the spot of sunlight through its pinhole sits on the middle line, and read your sun time. Once it is on the line, the dial also points true north. It can't be read near noon or for a couple of days at the equinoxes. It needs the seasons: in Vanilla the Sun never leaves the equator, the inner ring always shades the hole, and it shows no spot.
 
 ##### Controls
-- Scroll: *set the latitude*; Shift + scroll: *set the date*; Shift + right click: *look it over closely*
-- Right click: *unfold it before you (face north first), or fold it again*; scroll while open: *turn it (Shift: finely)*
-- Hold right click while open: *look closely and turn it finely with the mouse until the spot sits on the line, then let go*
+- `Scroll`: *set the latitude*; `Shift + scroll`: *set the date*;
+- `Shift + right click` when folded: *look it over closely*
+- `Right click`: *unfold it before you (face north first), or fold it again*; scroll while open: *turn it (Shift: finely)*
+- Hold `right click` while open: *look closely and turn it finely with the mouse until the spot sits on the line, then let go*
 
 #### Half-Hour Glass and Hour Glass
 About 100 and 150 crowns. Turn one over and the sand runs for half an hour or an hour of game time, and a bell strikes when it runs out. Take a sight, turn the glass at once, and work out the sums at your leisure: you know exactly how much later the bell rang. A glass lying on its side stops; in your pocket it keeps running.
 
 ##### Controls
-- Right click / R while holding it: *turns the glass over*
+- `Right click` / `R` while holding it: *turns the glass over*
 
 #### Watch Glass
 About 300 crowns: an hour glass on a heavy stand that turns itself every hour and strikes the bells of the watch: 2, 4, 6, then 8 bells at the end of the watch. Set it on deck (nail it down if the sea is up) and start it at a known hour, or set it by a lunar distance from the journal. It is no clock, though: it wanders a few minutes a day, so set it again from the Moon every few days.
 
 ##### Controls
-- Right click: *starts it, or stops it*
+- `Right click`: *starts it, or stops it*
 
 ##### Config Options
 - Watch Glass Wakes Captain: *wake up at eight bells when you sleep aboard. Default = false*
@@ -307,9 +317,9 @@ The lunarian's deck watch, about 220 crowns, readable to the minute. Every watch
 Model: [Pocket Watch](https://polyhaven.com/a/pocket_watch) by PierreB3D, Poly Haven (CC0).
 
 ##### Controls
-- Scroll while holding it: *winds the watch*
-- Hold right click / R: *brings it to your eye*
-- Scroll while at your eye: *sets the minute hand (Shift: the hour hand)*
+- `Scroll` while holding it: *winds the watch*
+- Hold `right click` / `R`: *brings it to your eye*
+- `Scroll` while at your eye: *sets the minute hand (`Shift`: the hour hand)*
 
 #### Chronometers
 Every chronometer has its own number, engraved on its dial as real makers did, its own rate and a little wander. Carry two or three and compare them in the journal. Only the watchmaker can regulate one.
@@ -320,9 +330,9 @@ The game's chrono-compass is a chronometer too now, and it can be set for the re
 - **Sun's declination** sets its latitude scale, and the **equation of time** sets its clock to the real Sun, so it gives true latitude and longitude in every season.
 
 ##### Controls
-- Shift + scroll: *set the Sun's declination (Dec), in steps of half a degree*
-- Alt + scroll: *set the equation of time (EoT), in steps of half a degree*
-- Shift + Alt + scroll: *wind it (when the cabin boy doesn't)*
+- `Shift + scroll`: *set the Sun's declination (Dec), in steps of half a degree*
+- `Alt + scroll`: *set the equation of time (EoT), in steps of half a degree*
+- `Shift + Alt + scroll`: *wind it (when the cabin boy doesn't)*
 
 ##### Finding Dec and EoT in the Almanac
 Open the Almanac at today's date and look at the Sun table on the right page, row 12 (noon):
@@ -334,9 +344,9 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 **Only works with default star set and the 92 day year** (with any year length but the day markers and scroll increment becomes inaccurate)
 
 ##### Controls
-- Scroll: *this advances or decreases the rotation by exactly one hour*
-- Click: *this rotates the planisphere to the south side*
-- Scroll while rotated: *this advances or decreases the rotation by a fine tuning amount that can reach any day or hour combination*
+- `Scroll`: *this advances or decreases the rotation by exactly one hour*
+- `Click`: *this rotates the planisphere to the south side*
+- `Scroll` while rotated: *this advances or decreases the rotation by a fine tuning amount that can reach any day or hour combination*
 
 ### Dead reckoning
 
@@ -346,10 +356,10 @@ About 25 crowns: the painted board the helmsman kept by the binnacle. A compass 
 In **Automatic** mode (the default) the board keeps itself while you are aboard: it watches the course steered and the speed over the first hour of every two, and puts the pegs in when that hour is over. A fresh board starts at 00:00 and 12:00 local time. In **Manual** mode you keep it yourself with the compass, the chip log and a sand glass.
 
 ##### Controls
-- Right click with empty hands: *bring the view up to the board; the mouse moves over it*
-- Click a hole: *put that period's peg in, or pull it out*
-- Shift + click the hub: *pull every peg*
-- Click it with the journal in hand: *copy the board into the journal's Traverse page*
+- `Right click` with empty hands: *bring the view up to the board; the mouse moves over it*
+- `Click` a hole: *put that period's peg in, or pull it out*
+- `hift + click` the hub: *pull every peg*
+- `Click` it with the journal in hand: *copy the board into the journal's Traverse page*
 
 ##### Config Options
 - Mode: *Automatic or Manual. Default = Automatic*
@@ -363,7 +373,7 @@ While an instrument is at your eye, the view turns slower and the mouse's jitter
 - Aim Smoothing: *how much the mouse is smoothed while aiming; 0 = none. Default = 0.06*
 
 ### Studying an item
-Hold **Shift + right click** with the Astrolabe, Jacob's Staff, Ring Dial, Star Map unfolded, the Almanac or the Celestial Atlas open, in your hand: item comes up close to your eye, and moving the mouse glides over them. Let go and it goes back into your hand.
+Hold `Shift + right click` with the Astrolabe, Jacob's Staff, Ring Dial, Star Map unfolded, the Almanac or the Celestial Atlas open, in your hand: item comes up close to your eye, and moving the mouse glides over them. Let go and it goes back into your hand.
 
 ##### Config Options
 - Study Zoom: *how close it comes, in percent of its usual size. Default = 250*
