@@ -157,7 +157,7 @@ The Sun and the Moon can be used just like the stars and planets. Every page of 
 ### Lunar distances
 Before good clocks, navigators told the time from the Moon. It slides across the stars by about its own width every hour, so the angle between the Moon and a star works like the hand of a clock. The Almanac's **Lunar Distances** page, after the planets, lists that angle for every hour.
 
-1. Take the quintant or the cross-staff and press **L**.
+1. Take the quintant or the cross-staff and press **`L`**.
 2. Pick the Sun or a star from today's lunar table.
 3. Bring the near edge of the Moon onto it and take the reading.
 4. The Navigator's Journal looks it up for you and gives the time at the zero meridian. You can also do it by hand: find the two hours your distance falls between in the table and split the difference.
@@ -165,13 +165,13 @@ Before good clocks, navigators told the time from the Moon. It slides across the
 Turn your glass or note your watch the moment you take the sight, and carry that time to your next sights.
 
 ##### Config Options
-- Lunar Mode Key: *switches the quintant and the cross-staff to lunar distance. Default = L*
+- Lunar Mode Key: *switches the quintant and the cross-staff to lunar distance. Default = `L`*
 
 ## Locations
-Realistic Skies adds three merchants at each of the capital cities and one special location.
+Realistic Skies adds three merchants and watchmakers at each of the capital cities and one special location.
 
 ### The watchmaker
-An old craftsman with a small stall in each capital, there from 7:00 to 18:00. Hold out a pocket watch or a chronometer to him and he offers to regulate it for about a third of its price. Four hours later it is back on his stall: right to the second, wound, and keeping much better time. For a chronometer he writes a certificate into your journal.
+An old craftsman with a small stall in each capital, there from 7:00 to 18:00. Hold out a pocket watch, chronocompass or a chronometer to him and he offers to regulate it for about a third of its price. Four hours later it is back on his stall: right to the second, wound, and keeping much better time. For a chronometer and chronocompass he writes a certificate into your journal.
 
 ### Kicia Bay Observatory
 Kicia Bay Observatory is a unique location built on the mountain next to Kicia Bay. Here is where the more niche instruments can be found that can be useful but not required.
