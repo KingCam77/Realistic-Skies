@@ -307,21 +307,27 @@ namespace RealisticSkies
                 ChronoState cs = ChronoState.Of(item);
                 float rate = cs.Regulate();
                 NavJournal.Certificate(cs.serial, NavMath.NowAbs, rate);
-
-                bool any = false;
-                Bounds wb = default(Bounds);
-                foreach (Renderer r in item.GetComponentsInChildren<Renderer>())
-                {
-                    if (!r.enabled || r is ParticleSystemRenderer) continue;
-                    if (!any) { wb = r.bounds; any = true; }
-                    else wb.Encapsulate(r.bounds);
-                }
-                // Приподнимаем на толщину корпуса, чтобы предмет лежал строго на крышке стола
-                if (any) job.Lay(pos + Vector3.up * (pos.y - wb.min.y + 0.002f), layRot);
+                LiftOntoBench(job, item, pos, layRot);
             }
 
             NotificationUi.instance.ShowNotification("The watchmaker will have it ready at " + LocalClock(job.readyAt));
             Debug.Log("RealisticSkies: watchmaker on island " + npc.island + " took " + item.name + " for " + price + ", ready at " + job.readyAt.ToString("F2", CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>A chronometer is laid on the bench by its body's bottom, not by its middle.</summary>
+        internal static void LiftOntoBench(RepairJob job, ShipItem item, Vector3 pos, Quaternion layRot)
+        {
+            if (!ChronoState.IsChrono(item)) return;
+            bool any = false;
+            Bounds wb = default(Bounds);
+            foreach (Renderer r in item.GetComponentsInChildren<Renderer>())
+            {
+                if (!r.enabled || r is ParticleSystemRenderer) continue;
+                if (!any) { wb = r.bounds; any = true; }
+                else wb.Encapsulate(r.bounds);
+            }
+            // Приподнимаем на толщину корпуса, чтобы предмет лежал строго на крышке стола
+            if (any) job.Lay(pos + Vector3.up * (pos.y - wb.min.y + 0.002f), layRot);
         }
 
         /// <summary>An absolute time (game hours) as the port's clock shows it.</summary>
@@ -864,6 +870,7 @@ namespace RealisticSkies
         private Renderer[] renderers;
         private Collider[] colliders;
         private bool shown = true;
+        private float settleUntil = float.MaxValue;
         private int region = -1;
 
         internal Shopkeeper Keeper => keeper;
@@ -912,6 +919,7 @@ namespace RealisticSkies
 
         private void Start()
         {
+            settleUntil = Time.time + 5f;
             FindRegion();
         }
 
@@ -937,6 +945,16 @@ namespace RealisticSkies
         {
             // at night he goes home, as the traders do, but not before your eyes
             bool open = OpenNow;
+            if (Time.time < settleUntil)
+            {
+                // The figure is copied from a townsman as he is at that moment; just after a load
+                // the game may have his parts switched off, and the copy kept them off till the
+                // watchmaker next went home and came back. Put his state on him, whatever came along.
+                shown = open;
+                foreach (Renderer r in renderers) if (r != null && r.enabled != open) r.enabled = open;
+                foreach (Collider c in colliders) if (c != null && c.enabled != open) c.enabled = open;
+                return;
+            }
             if (open == shown) return;
             if (!open)
             {
@@ -1134,15 +1152,54 @@ namespace RealisticSkies
 
         internal void Lay(Vector3 p, Quaternion r)
         {
-            // kept in the space of what it hangs under (the world moves when the floating origin does)
-            Transform parent = transform.parent;
-            pos = parent != null ? parent.InverseTransformPoint(p) : p;
-            rot = parent != null ? Quaternion.Inverse(parent.rotation) * r : r;
+            // Kept in real (unshifted) coordinates. The floating origin moves the world's children,
+            // not the world itself, so a place kept in the space of the parent (the world, or the
+            // scene's root a loaded item hangs at) would pull the watch back each time the world
+            // shifts, as it does at once after a load, and leave it kilometres from the stall.
+            pos = p - Offset;
+            rot = r;
             laid = true;
             transform.position = p;
             transform.rotation = r;
             Hold();
         }
+
+        private float rescueAt;
+
+        /// <summary>
+        /// A watch that strayed from the bench (older versions let it stay behind when the world
+        /// shifted, so it ended up far out at sea): once the player is at a watchmaker's, it is back on
+        /// his bench. One whose town isn't known goes to the watchmaker the player is at.
+        /// </summary>
+        private void Rescue()
+        {
+            if (Time.time < rescueAt) return;
+            rescueAt = Time.time + 2f;
+            ShipItem it = GetComponent<ShipItem>();
+            if (it == null || it.held != null) return;
+            Camera cam = Camera.main;
+            if (cam == null) return;
+            int here = Watchmaker.NearestTown(cam.transform.position);
+            if (here < 0) return;
+            int town = island;
+            if (town < 0)
+            {
+                town = Watchmaker.NearestTown(transform.position);
+                if (town < 0) town = here;
+            }
+            if (town != here) return;               // its own watchmaker isn't where the player is
+            if (!Watchmaker.BenchPose(town, out Vector3 p, out Quaternion r)) return;
+            if (Vector3.Distance(transform.position, p) < 3f) { island = town; return; }
+            Debug.Log("RealisticSkies: watchmaker on island " + town + " finds " + name + " " + Vector3.Distance(transform.position, p).ToString("F0") + " m from his bench and lays it back");
+            island = town;
+            Quaternion lay = it is ShipItemCompass ? r * Quaternion.Euler(-90f, 0f, 0f) : r;
+            Lay(p, lay);
+            Watchmaker.LiftOntoBench(this, it, p, lay);
+        }
+
+        private void Update() => Rescue();
+
+        private static Vector3 Offset => FloatingOriginManager.instance != null ? FloatingOriginManager.instance.outCurrentOffset : Vector3.zero;
 
         /// <summary>
         /// The game moves an item to where its physics body (a separate object) lies, and drops a far
@@ -1152,11 +1209,10 @@ namespace RealisticSkies
         {
             ShipItem it = GetComponent<ShipItem>();
             if (it == null || it.held != null) return;
-            Transform parent = transform.parent;
             if (laid)
             {
-                transform.position = parent != null ? parent.TransformPoint(pos) : pos;
-                transform.rotation = parent != null ? parent.rotation * rot : rot;
+                transform.position = pos + Offset;
+                transform.rotation = rot;
             }
             ItemRigidbody irb = it.GetItemRigidbody();
             if (irb == null) return;
@@ -1202,8 +1258,12 @@ namespace RealisticSkies
             if (irb != null)
             {
                 foreach (Collider c in irb.GetComponentsInChildren<Collider>(true)) c.enabled = true;
+                irb.transform.position = transform.position;
+                irb.transform.rotation = transform.rotation;
                 irb.enabled = true;
-                irb.ResetPos();
+                // after a load the body was put to sleep before its Start made its Rigidbody: Start
+                // (now that it is enabled) makes it and resets the place itself
+                if (irb.GetBody() != null) irb.ResetPos();
             }
             Destroy(this);
         }
@@ -1248,6 +1308,59 @@ namespace RealisticSkies
             }
             __result.extraValue0 = (float)job.readyAt;
             __result.extraValue1 = job.island + 1;
+        }
+
+        // A chronometer's extra values are all taken by its own state: the town of its job is kept in
+        // the save's mod data instead, by the item's instance id. The game writes the mod data after
+        // the items and reads it back after them.
+        private const string IslandKey = "RealisticSkies.Watchmaker.";
+
+        [HarmonyPatch(typeof(SaveLoadManager), "SaveModData")]
+        [HarmonyPrefix]
+        private static void SaveIslands()
+        {
+            try
+            {
+                if (GameState.modData == null) GameState.modData = new Dictionary<string, string>();
+                var old = new List<string>();
+                foreach (string k in GameState.modData.Keys) if (k.StartsWith(IslandKey, StringComparison.Ordinal)) old.Add(k);
+                foreach (string k in old) GameState.modData.Remove(k);
+                foreach (RepairJob job in UnityEngine.Object.FindObjectsOfType<RepairJob>())
+                {
+                    SaveablePrefab sp = job.GetComponent<SaveablePrefab>();
+                    if (sp == null || job.island < 0) continue;
+                    GameState.modData[IslandKey + sp.instanceId.ToString(CultureInfo.InvariantCulture)] = job.island.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("RealisticSkies: watchmaker: can't save the towns of the watches: " + e);
+            }
+        }
+
+        [HarmonyPatch(typeof(SaveLoadManager), "LoadModData")]
+        [HarmonyPostfix]
+        private static void LoadIslands()
+        {
+            try
+            {
+                if (GameState.modData == null) return;
+                foreach (RepairJob job in UnityEngine.Object.FindObjectsOfType<RepairJob>())
+                {
+                    if (job.island >= 0) continue;
+                    SaveablePrefab sp = job.GetComponent<SaveablePrefab>();
+                    if (sp == null) continue;
+                    if (GameState.modData.TryGetValue(IslandKey + sp.instanceId.ToString(CultureInfo.InvariantCulture), out string s)
+                        && int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int isl))
+                    {
+                        job.island = isl;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("RealisticSkies: watchmaker: can't read the towns of the watches: " + e);
+            }
         }
 
         [HarmonyPatch(typeof(SaveablePrefab), "Load")]

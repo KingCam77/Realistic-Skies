@@ -226,11 +226,14 @@ namespace RealisticSkies
                 "Automatic: aboard a boat, the traverse board puts in the pegs for each two hours by itself, from the course steered and the speed, when the first hour of the two is over (you may still move them by hand). Manual: you keep it yourself with the compass, the log and a sand glass.");
             configPegCords = Config.Bind("Traverse Board", "Peg Cords", true,
                 "The traverse board's pegs hang on cords and swing with the ship. Off: no cords; a peg out of play sits in its resting hole.");
+            configPointNames = Config.Bind("Traverse Board", "Point Names", TraverseNaming.NativeAndEuropean,
+                "How the look text and the journal name the directions on the Emerald and Al'Ankh traverse boards. Native: their own names (Chou, rising of Naghma). NativeAndEuropean: both. European: the familiar compass points.");
 
             CompatClimate.Init(harmony, Config);
             CompatRadRefinements.Init(harmony);
         }
 
+        internal static ConfigEntry<TraverseNaming> configPointNames;
         internal static ConfigEntry<TraverseMode> configTraverseMode;
         internal static ConfigEntry<bool> configPegCords;
         

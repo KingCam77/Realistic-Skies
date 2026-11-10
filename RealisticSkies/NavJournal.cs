@@ -90,9 +90,13 @@ namespace RealisticSkies
             chronos.Add(n);
             return n;
         }
-        /// <summary>One line copied from a traverse board: a two-hour period of one board (cycle = day * 2 + half).</summary>
+        /// <summary>
+        /// One line copied from a traverse board: a two-hour period of one board. cycle = the style's
+        /// board count (TraverseStyle.CycleAt: day * 2 + half, the junk's boards an hour earlier).
+        /// </summary>
         internal struct TraverseMark
         {
+            public string style;        // TraverseStyle.Id ("aestrin" for lines from before the styles)
             public int cycle, period;
             public int point;           // -1: no rose peg
             public int col;             // -1: no grid peg; else knots - 1
@@ -410,16 +414,15 @@ namespace RealisticSkies
             Load();
             foreach (TraverseMark m in marks)
             {
-                traverse.RemoveAll(x => x.cycle == m.cycle && x.period == m.period);
+                traverse.RemoveAll(x => x.style == m.style && x.cycle == m.cycle && x.period == m.period);
                 traverse.Add(m);
             }
-            var cycles = new List<int>();
-            foreach (TraverseMark m in traverse) if (!cycles.Contains(m.cycle)) cycles.Add(m.cycle);
-            cycles.Sort();
-            if (cycles.Count > MaxBoards)
+            List<string> boards = TraverseBoards(oldestFirst: true);
+            while (boards.Count > MaxBoards)
             {
-                int keepFrom = cycles[cycles.Count - MaxBoards];
-                traverse.RemoveAll(x => x.cycle < keepFrom);
+                string drop = boards[0];
+                boards.RemoveAt(0);
+                traverse.RemoveAll(x => BoardKey(x) == drop);
             }
             Save();
         }
@@ -513,10 +516,11 @@ namespace RealisticSkies
                             case "trav":
                                 string[] tv = v.Split('|');
                                 if (tv.Length < 4) break;
+                                TraverseStyle tst = TraverseStyle.ById(tv.Length > 4 ? tv[4] : "aestrin");
                                 if (int.TryParse(tv[0], out int tc) && int.TryParse(tv[1], out int tp) && int.TryParse(tv[2], out int tpt) && int.TryParse(tv[3], out int tcol)
-                                    && tp >= 0 && tp < 6 && tpt >= -1 && tpt < 32 && tcol >= -1 && tcol < 12)
+                                    && tp >= 0 && tp < 6 && tpt >= -1 && tpt < tst.Points && tcol >= -1 && tcol < 12)
                                 {
-                                    traverse.Add(new TraverseMark { cycle = tc, period = tp, point = tpt, col = tcol });
+                                    traverse.Add(new TraverseMark { style = tst.Id, cycle = tc, period = tp, point = tpt, col = tcol });
                                 }
                                 break;
                         }
@@ -553,7 +557,7 @@ namespace RealisticSkies
                 {
                     lines.Add("chrono=" + c.serial + "|" + Str(c.t1) + "|" + Str(c.e1) + "|" + Str(c.t2) + "|" + Str(c.e2) + "|" + Str(c.cert));
                 }
-                foreach (TraverseMark m in traverse) lines.Add("trav=" + m.cycle + "|" + m.period + "|" + m.point + "|" + m.col);
+                foreach (TraverseMark m in traverse) lines.Add("trav=" + m.cycle + "|" + m.period + "|" + m.point + "|" + m.col + "|" + (m.style ?? "aestrin"));
                 foreach (string l in (notes ?? "").Replace("\r", "").Split('\n')) lines.Add("note=" + l);
                 File.WriteAllLines(FilePath, lines.ToArray());
             }
@@ -1116,6 +1120,23 @@ namespace RealisticSkies
 
         private static Vector2 travScroll;
 
+        /// <summary>One board in the journal: its style and its count.</summary>
+        private static string BoardKey(TraverseMark m) => (m.style ?? "aestrin") + "|" + m.cycle;
+
+        /// <summary>The boards in the journal by when they began (local hours), newest or oldest first.</summary>
+        private static List<string> TraverseBoards(bool oldestFirst)
+        {
+            var begins = new Dictionary<string, double>();
+            foreach (TraverseMark m in traverse)
+            {
+                string k = BoardKey(m);
+                if (!begins.ContainsKey(k)) begins[k] = m.cycle * 12.0 + TraverseStyle.ById(m.style).PeriodStart;
+            }
+            var keys = new List<string>(begins.Keys);
+            keys.Sort((a, b) => oldestFirst ? begins[a].CompareTo(begins[b]) : begins[b].CompareTo(begins[a]));
+            return keys;
+        }
+
         /// <summary>
         /// The traverse boards copied in, newest first: for each, its lines (course, time, speed,
         /// distance) and what they come to: the course and distance made good, the difference of
@@ -1127,41 +1148,43 @@ namespace RealisticSkies
             GUILayout.Label("Traverse", sHead, GUILayout.Width(140));
             GUILayout.Label("Hold the journal and click a traverse board to copy its pegs in.", sSmall);
             GUILayout.EndHorizontal();
-            var cycles = new List<int>();
-            foreach (TraverseMark m in traverse) if (!cycles.Contains(m.cycle)) cycles.Add(m.cycle);
-            cycles.Sort((a, b) => b.CompareTo(a));
+            List<string> boards = TraverseBoards(oldestFirst: false);
             double lat = Latitude();
 
             travScroll = GUILayout.BeginScrollView(travScroll, GUILayout.Height(390));
-            if (cycles.Count == 0) GUILayout.Label("Nothing yet.", sSmall);
-            foreach (int c in cycles)
+            if (boards.Count == 0) GUILayout.Label("Nothing yet.", sSmall);
+            foreach (string key in boards)
             {
-                int day = (int)Math.Floor(c / 2.0);
-                bool pm = c - day * 2 == 1;
-                GUILayout.Label("Day " + day + ", " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(day)) + ", " + (pm ? "afternoon board" : "morning board"), sHead);
+                TraverseMark first = traverse.Find(x => BoardKey(x) == key);
+                TraverseStyle st = TraverseStyle.ById(first.style);
+                int c = first.cycle;
+                int half = c - 2 * (int)Math.Floor(c / 2.0);
+                bool pm = half == 1;
+                // the day the board began (the junk's first board of a day begins at 23:00 the evening before)
+                int day = (int)Math.Floor((c * 12.0 + st.PeriodStart) / 24.0);
+                GUILayout.Label("Day " + day + ", " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(day)) + ", " + st.BoardName(half), sHead);
                 GUILayout.BeginHorizontal();
-                GUILayout.Label("Course", sText, GUILayout.Width(200));
-                GUILayout.Label("Time", sText, GUILayout.Width(130));
+                GUILayout.Label("Course", sText, GUILayout.Width(st.Native ? 330 : 200));
+                GUILayout.Label("Time", sText, GUILayout.Width(st.PeriodNames != null ? 160 : 130));
                 GUILayout.Label("Speed", sText, GUILayout.Width(110));
                 GUILayout.Label("Distance", sText, GUILayout.Width(120));
                 GUILayout.EndHorizontal();
-                var rows = traverse.FindAll(x => x.cycle == c);
+                var rows = traverse.FindAll(x => BoardKey(x) == key);
                 rows.Sort((a, b) => a.period.CompareTo(b.period));
                 double n = 0.0, e = 0.0;
                 int legs = 0;
                 foreach (TraverseMark m in rows)
                 {
-                    int h0 = 2 * m.period + (pm ? 12 : 0);
                     int kn = m.col >= 0 ? m.col + 1 : 0;
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(m.point >= 0 ? ModItemTraverseBoard.PointText(m.point) : "—", sResult, GUILayout.Width(200));
-                    GUILayout.Label(h0.ToString("00") + "–" + (h0 + 2).ToString("00"), sResult, GUILayout.Width(130));
+                    GUILayout.Label(m.point >= 0 ? st.PointText(m.point) : "—", sResult, GUILayout.Width(st.Native ? 330 : 200));
+                    GUILayout.Label(st.PeriodJournal(m.period, half), sResult, GUILayout.Width(st.PeriodNames != null ? 160 : 130));
                     GUILayout.Label(kn > 0 ? kn + " kn" : "—", sResult, GUILayout.Width(110));
                     GUILayout.Label(kn > 0 ? 2 * kn + " nm" : "—", sResult, GUILayout.Width(120));
                     GUILayout.EndHorizontal();
                     if (m.point >= 0 && kn > 0)
                     {
-                        double d = 2.0 * kn, b = m.point * 11.25 * Math.PI / 180.0;
+                        double d = 2.0 * kn, b = m.point * (double)st.PointStep * Math.PI / 180.0;
                         n += d * Math.Cos(b);
                         e += d * Math.Sin(b);
                         legs++;
@@ -1172,9 +1195,7 @@ namespace RealisticSkies
                     double dist = Math.Sqrt(n * n + e * e);
                     double brg = Math.Atan2(e, n) * 180.0 / Math.PI;
                     if (brg < 0) brg += 360.0;
-                    int pt = ((int)Math.Round(brg / 11.25) % 32 + 32) % 32;
-                    string made = "Made good: " + TraverseBoardLayout.PointNames[pt] + " " + Math.Round(brg).ToString("0", CultureInfo.InvariantCulture) + "°, " +
-                                  Math.Round(dist).ToString("0", CultureInfo.InvariantCulture) + " nm.";
+                    string made = "Made good: " + st.CourseText(brg) + ", " + Math.Round(dist).ToString("0", CultureInfo.InvariantCulture) + " nm.";
                     // miles are the chip log's (knots x hours), as the cartographer's ruler counts them;
                     // the differences of latitude and longitude are minutes of arc on the globe
                     double k = ModItemTraverseBoard.ArcminPerLogMile;

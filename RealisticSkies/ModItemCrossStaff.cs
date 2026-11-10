@@ -779,7 +779,8 @@ namespace RealisticSkies
             bool astrolabe = !staff && !quintant && __instance.GetComponent<ModItemAstrolabe>() != null;
             bool nocturnal = !staff && !quintant && !astrolabe && __instance.GetComponent<ModItemNocturnal>() != null;
             ModItemRingDial dial = !staff && !quintant && !astrolabe && !nocturnal ? __instance.GetComponent<ModItemRingDial>() : null;
-            bool board = !staff && !quintant && !astrolabe && !nocturnal && dial == null && __instance.GetComponent<ModItemTraverseBoard>() != null;
+            ModItemTraverseBoard boardItem = !staff && !quintant && !astrolabe && !nocturnal && dial == null ? __instance.GetComponent<ModItemTraverseBoard>() : null;
+            bool board = boardItem != null;
             if (!staff && !quintant && !astrolabe && !nocturnal && dial == null && !board) return;
             Collider hook = Traverse.Create(__instance).Field("currentHook").GetValue<Collider>();
             if (hook == null) return;
@@ -810,7 +811,7 @@ namespace RealisticSkies
             {
                 // by the hole in its heart, upright, the painted front (its -z) to the room, the back toward the hook's mount
                 t.rotation = Quaternion.LookRotation(-face, Vector3.up);
-                t.position = at - t.rotation * TraverseBoardLayout.HangPoint;
+                t.position = at - t.rotation * boardItem.Style.HangPoint;      // the heart, crest or finial: each style's own
                 return;
             }
             if (nocturnal)

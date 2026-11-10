@@ -32,11 +32,25 @@ namespace RealisticSkies
     /// </summary>
     public class ModItemTraverseBoard : ShipItem
     {
-        public const int PrefabIndex = 718;
         private const int SourceIndex = 91;
-        private const string ItemName = "traverse board";
 
-        private const float T = TraverseBoardLayout.Thickness;
+        private const float T = TraverseBoardLayout.Thickness;      // the same on every style
+
+        private TraverseStyle style;
+
+        /// <summary>Which board this is (TraverseStyle): told by its prefab, 718 / 719 / 720.</summary>
+        internal TraverseStyle Style
+        {
+            get
+            {
+                if (style == null)
+                {
+                    SaveablePrefab sp = GetComponent<SaveablePrefab>();
+                    style = TraverseStyle.ByPrefab(sp != null ? sp.prefabIndex : TraverseStyle.Aestrin.Prefab);
+                }
+                return style;
+            }
+        }
         // the nearest hole within this of the view's middle (the nearest wins, so neighbours never overlap);
         // the hole already aimed at holds until another is clearly nearer
         private const float AimReach = 0.012f, AimHold = 0.003f, HubReach = 0.012f;
@@ -48,7 +62,7 @@ namespace RealisticSkies
 
         public override void OnLoad()
         {
-            base.name = ItemName;
+            base.name = Style.ItemName;
             TryLoadState();
             EnsureRuntime();
             Relay();
@@ -64,7 +78,7 @@ namespace RealisticSkies
             if (id <= 0) return;
             stateLoaded = true;
             TraverseState s = TraverseStore.Get(id);
-            if (s != null) { state = s; Relay(); }
+            if (s != null) { s.Fit(Style.Points); state = s; Relay(); }
         }
 
         private static bool ShiftKey => StudyMode.Shift;
@@ -143,7 +157,7 @@ namespace RealisticSkies
             public Vector3 pos;
         }
 
-        internal static Hole FindHole(Vector3 local)
+        internal static Hole FindHole(TraverseStyle s, Vector3 local)
         {
             var none = new Hole();
             if (Mathf.Abs(local.z + T) > 0.004f) return none;           // the front face only
@@ -151,17 +165,17 @@ namespace RealisticSkies
             if (p.magnitude <= HubReach) return new Hole { kind = 3, pos = new Vector3(0f, 0f, -T) };
             Hole best = none;
             float bestD = AimReach;
-            var rose = TraverseBoardLayout.RoseHoles;
+            var rose = s.RoseHoles;
             for (int i = 0; i < rose.Length; i++)
             {
                 float d = Vector2.Distance(p, new Vector2(rose[i].x, rose[i].y));
-                if (d < bestD) { bestD = d; best = new Hole { kind = 1, a = i / TraverseBoardLayout.Points, b = i % TraverseBoardLayout.Points, pos = rose[i] }; }
+                if (d < bestD) { bestD = d; best = new Hole { kind = 1, a = i / s.Points, b = i % s.Points, pos = rose[i] }; }
             }
-            var grid = TraverseBoardLayout.GridHoles;
+            var grid = s.GridHoles;
             for (int i = 0; i < grid.Length; i++)
             {
                 float d = Vector2.Distance(p, new Vector2(grid[i].x, grid[i].y));
-                if (d < bestD) { bestD = d; best = new Hole { kind = 2, a = i / TraverseBoardLayout.Cols, b = i % TraverseBoardLayout.Cols, pos = grid[i] }; }
+                if (d < bestD) { bestD = d; best = new Hole { kind = 2, a = i / TraverseStyle.Cols, b = i % TraverseStyle.Cols, pos = grid[i] }; }
             }
             return best;
         }
@@ -182,7 +196,7 @@ namespace RealisticSkies
                 if (d.z > 1e-4f)
                 {
                     Vector3 at = e + d * ((-T - e.z) / d.z);
-                    Hole h = FindHole(at);
+                    Hole h = FindHole(Style, at);
                     var p = new Vector2(at.x, at.y);
                     if (was.kind != 0)
                     {
@@ -200,28 +214,19 @@ namespace RealisticSkies
         /// <summary>What the aimed hole is, for the line under the board view.</summary>
         private string AimText()
         {
-            if (aim.kind == 1) return PointText(aim.b) + ", hours " + Hours(aim.a);
-            if (aim.kind == 2) return (aim.b + 1) + (aim.b == 0 ? " knot" : " knots") + ", hours " + Hours(aim.a);
+            TraverseStyle s = Style;
+            // the board does not know whether it is the morning's or the afternoon's; the junk's board
+            // names its double hours, and those differ between its two boards: take the one it is now
+            int half = s.PeriodNames != null ? HalfNow : 0;
+            if (aim.kind == 1) return s.PointText(aim.b) + ", " + s.PeriodLook(aim.a, half);
+            if (aim.kind == 2) return (aim.b + 1) + (aim.b == 0 ? " knot" : " knots") + ", " + s.PeriodLook(aim.a, half);
             if (aim.kind == 3) return "the hub (Shift + click: pull every peg)";
             return "";
         }
 
-        private static string Hours(int period) => (2 * period).ToString("00") + "–" + (2 * period + 2).ToString("00");
-
-        /// <summary>"NNW 337½°"</summary>
-        internal static string PointText(int point)
-        {
-            return TraverseBoardLayout.PointNames[point] + " " + Degrees(point * 11.25) + "°";
-        }
-
-        /// <summary>Degrees with quarters as the old tables wrote them: 11¼, 22½, 33¾.</summary>
-        internal static string Degrees(double deg)
-        {
-            double q = Math.Round(deg * 4.0) / 4.0;
-            int whole = (int)Math.Floor(q);
-            int frac = (int)Math.Round((q - whole) * 4.0);
-            return whole.ToString(CultureInfo.InvariantCulture) + (frac == 1 ? "¼" : frac == 2 ? "½" : frac == 3 ? "¾" : "");
-        }
+        /// <summary>The board it is now by local time (its first or second of the day).</summary>
+        private int CycleNow => Style.CycleAt(Clock.LocalHours);
+        private int HalfNow { get { int c = CycleNow; return c - 2 * (int)Math.Floor(c / 2.0); } }
 
         public override void UpdateLookText()
         {
@@ -316,9 +321,9 @@ namespace RealisticSkies
             Refs.SetPlayerControl(true);
         }
 
-        private static Vector2 ClampPan(Vector2 p)
+        private Vector2 ClampPan(Vector2 p)
         {
-            Rect b = TraverseBoardLayout.Bounds;
+            Rect b = Style.Bounds;
             return new Vector2(Mathf.Clamp(p.x, b.xMin - PanMargin, b.xMax + PanMargin), Mathf.Clamp(p.y, b.yMin - PanMargin, b.yMax + PanMargin));
         }
 
@@ -387,7 +392,7 @@ namespace RealisticSkies
             if (state.place[peg] < 0) Unset(peg);
             state.byHand[period] = true;
             state.copied[period] = false;
-            state.cycleOf[period] = Clock.Cycle;
+            state.cycleOf[period] = CycleNow;
             Tock();
         }
 
@@ -464,7 +469,8 @@ namespace RealisticSkies
                 if (state.copied[j] || (state.place[j] < 0 && state.place[6 + j] < 0)) continue;
                 marks.Add(new NavJournal.TraverseMark
                 {
-                    cycle = state.cycleOf[j] >= 0 ? state.cycleOf[j] : Clock.Cycle,
+                    style = Style.Id,
+                    cycle = state.cycleOf[j] >= 0 ? state.cycleOf[j] : CycleNow,
                     period = j,
                     point = state.place[j],
                     col = state.place[6 + j],
@@ -486,7 +492,8 @@ namespace RealisticSkies
         /// <summary>Called every frame: copies at the turn of the watch, before a new board clears the old.</summary>
         private void CrewTick(double localHours)
         {
-            int watch = (int)Math.Floor(localHours / 4.0);
+            // the watches turn with the board's own hours (23:00, 03:00... on the junk's board)
+            int watch = (int)Math.Floor((localHours - Style.PeriodStart) / 4.0);
             if (lastWatch == int.MinValue) { lastWatch = watch; return; }
             if (watch == lastWatch) return;
             lastWatch = watch;
@@ -536,9 +543,6 @@ namespace RealisticSkies
 
             /// <summary>Hours since day 0 at the zero meridian (to time the measuring).</summary>
             internal static double GlobalHours => GameState.day * 24.0 + (Sun.sun != null ? Sun.sun.globalTime : 0f);
-
-            /// <summary>The board: day * 2 for 00-12, day * 2 + 1 for 12-24.</summary>
-            internal static int Cycle => (int)Math.Floor(LocalHours / 12.0);
         }
 
         // ---------------- speeds: the chip log's knots ----------------
@@ -575,8 +579,10 @@ namespace RealisticSkies
         {
             if (Sun.sun == null || !GameState.playing || GameState.currentlyLoading || FloatingOriginManager.instance == null) return;
             double lh = Clock.LocalHours;
-            int cycle = (int)Math.Floor(lh / 12.0);
-            double inBoard = lh - cycle * 12.0;
+            // a style's boards may begin off the hour of 00/12 (the junk's at 23:00 and 11:00)
+            double ps = Style.PeriodStart;
+            int cycle = Style.CycleAt(lh);
+            double inBoard = lh - ps - cycle * 12.0;
             int j = Mathf.Clamp((int)Math.Floor(inBoard / 2.0), 0, 5);
             double inPeriod = inBoard - j * 2.0;
 
@@ -638,7 +644,8 @@ namespace RealisticSkies
             double kn = state.sumDist / state.sumTime / ArcminPerLogMile;      // what the chip log would show
             double brg = Math.Atan2(state.sumE, state.sumN) * Mathf.Rad2Deg;
             if (brg < 0) brg += 360.0;
-            int point = ((int)Math.Round(brg / 11.25) % 32 + 32) % 32;
+            int np = Style.Points;
+            int point = ((int)Math.Round(brg / Style.PointStep) % np + np) % np;
             if (kn < 0.5) return;                       // becalmed: no pegs
             int k = Mathf.Clamp((int)Math.Round(kn), 1, 12);
             state.place[j] = point;
@@ -647,7 +654,7 @@ namespace RealisticSkies
             state.cycleOf[j] = cycle;
         }
 
-        /// <summary>00:00 and 12:00: a clean board.</summary>
+        /// <summary>00:00 and 12:00 (the junk's board: 23:00 and 11:00): a clean board.</summary>
         private void NewBoard()
         {
             int lost = 0;
@@ -719,12 +726,13 @@ namespace RealisticSkies
         private int motionFrames;
         private float simAcc;
 
-        private static Vector3 HolePos(int peg, int place)
+        private Vector3 HolePos(int peg, int place)
         {
-            return peg < 6 ? TraverseBoardLayout.RoseHole(peg, place) : TraverseBoardLayout.GridHole(peg - 6, place);
+            return peg < 6 ? Style.RoseHole(peg, place) : Style.GridHole(peg - 6, place);
         }
 
-        private static Vector3 AnchorHole(int peg) => peg < 6 ? TraverseBoardLayout.RoseAnchors[peg] : TraverseBoardLayout.GridAnchors[peg - 6];
+        private static Vector3 AnchorHole(TraverseStyle s, int peg) => peg < 6 ? s.RoseAnchors[peg] : s.GridAnchors[peg - 6];
+        private Vector3 AnchorHole(int peg) => AnchorHole(Style, peg);
 
         private void EnsureRuntime()
         {
@@ -735,18 +743,20 @@ namespace RealisticSkies
             Transform an = t.Find("anchors");
             anchorsGo = an != null ? an.gameObject : null;
             rootRenderer = GetComponent<MeshRenderer>();
-            if (!LoadModel() || pegT[0] == null) return;
+            TraverseStyle s = Style;
+            StyleAssets assets = LoadModel(s);
+            if (assets == null || pegT[0] == null) return;
             runtimeReady = true;
 
             for (int i = 0; i < 12; i++)
             {
-                float len = i < 6 ? TraverseBoardLayout.RoseCord : TraverseBoardLayout.GridCord;
+                float len = i < 6 ? s.RoseCord : s.GridCord;
                 int n = Mathf.Max(4, Mathf.RoundToInt(len / SegLen));
                 cords[i] = new Cord
                 {
                     n = n,
                     seg = len / n,
-                    anchor = AnchorHole(i) + new Vector3(0f, 0f, TraverseBoardLayout.AnchorTieZ),
+                    anchor = AnchorHole(i) + new Vector3(0f, 0f, s.AnchorTieZ),
                     p = new Vector3[n + 1], q = new Vector3[n + 1], touch = new bool[n + 1],
                 };
             }
@@ -758,7 +768,7 @@ namespace RealisticSkies
             cordMesh.MarkDynamic();
             cg.AddComponent<MeshFilter>().sharedMesh = cordMesh;
             cordRenderer = cg.AddComponent<MeshRenderer>();
-            cordRenderer.sharedMaterial = cordMat;
+            cordRenderer.sharedMaterial = assets.cord;
             cordRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
             BuildCordTopology();
 
@@ -796,7 +806,7 @@ namespace RealisticSkies
             Cord c = cords[peg];
             if (c == null) return;
             Vector3 tie = c.p[c.n];
-            c.com = c.comQ = tie + new Vector3(0f, 0f, TraverseBoardLayout.PegCentreOfMassZ - TraverseBoardLayout.PegTie.z);
+            c.com = c.comQ = tie + new Vector3(0f, 0f, Style.PegCentreOfMassZ - Style.PegTie.z);
         }
 
         /// <summary>Every hanging cord laid straight down from its anchor, then let settle.</summary>
@@ -804,7 +814,7 @@ namespace RealisticSkies
         {
             if (!runtimeReady) return;
             relayPending = false;
-            float r = TraverseBoardLayout.PegCentreOfMassZ - TraverseBoardLayout.PegTie.z;
+            float r = Style.PegCentreOfMassZ - Style.PegTie.z;
             for (int i = 0; i < 12; i++)
             {
                 Cord c = cords[i];
@@ -824,23 +834,19 @@ namespace RealisticSkies
             if (CordsOn) DrawCords();
         }
 
-        private static bool OnBoard(float x, float y)
-        {
-            float R = TraverseBoardLayout.ArchRadius;
-            return y <= 0f ? (Mathf.Abs(x) <= R && y >= TraverseBoardLayout.BottomY) : (x * x + y * y <= R * R);
-        }
-
         /// <summary>One Verlet step in the board's own space (docs/traverse_tools/viewer step()).</summary>
         private void Step(float dt, Vector3 g)
         {
+            TraverseStyle s = Style;
             Vector3 gdt = g * (dt * dt);
-            float stick = TraverseBoardLayout.PegCentreOfMassZ - TraverseBoardLayout.PegTie.z;
+            float stick = s.PegCentreOfMassZ - s.PegTie.z;
+            float headR = s.PegHeadRadius;
             for (int i = 0; i < 12; i++)
             {
                 Cord c = cords[i];
                 int n = c.n;
                 bool set = state.place[i] >= 0;
-                Vector3 hole = set ? HolePos(i, state.place[i]) + TraverseBoardLayout.PegTie : Vector3.zero;
+                Vector3 hole = set ? HolePos(i, state.place[i]) + s.PegTie : Vector3.zero;
                 Vector3[] p = c.p, q = c.q;
                 for (int k = 1; k <= n; k++)
                 {
@@ -877,19 +883,19 @@ namespace RealisticSkies
                         if (l > 1e-9f)
                         {
                             Vector3 corr = d * ((l - stick) / l);
-                            float s = 1f + WPeg;
-                            p[n] += corr * (1f / s);
-                            c.com -= corr * (WPeg / s);
+                            float wsum = 1f + WPeg;
+                            p[n] += corr * (1f / wsum);
+                            c.com -= corr * (WPeg / wsum);
                         }
                     }
                     for (int k = 1; k <= n; k++)
                     {
-                        float lim = OnBoard(p[k].x, p[k].y) ? -T - CordR : -CordR;
+                        float lim = s.OnFace(p[k].x, p[k].y) ? -T - CordR : -CordR;
                         if (p[k].z > lim) { p[k].z = lim; c.touch[k] = true; }
                     }
                     if (!set)
                     {
-                        float lim = OnBoard(c.com.x, c.com.y) ? -T - TraverseBoardLayout.PegHeadRadius : -TraverseBoardLayout.PegHeadRadius;
+                        float lim = s.OnFace(c.com.x, c.com.y) ? -T - headR : -headR;
                         if (c.com.z > lim) { c.com.z = lim; c.comTouch = true; }
                     }
                 }
@@ -993,7 +999,7 @@ namespace RealisticSkies
                 Vector3 axis = c.com - tie;
                 axis = axis.sqrMagnitude > 1e-12f ? axis.normalized : Vector3.forward;
                 pt.localRotation = Quaternion.FromToRotation(Vector3.forward, axis);
-                pt.localPosition = tie - axis * TraverseBoardLayout.PegTie.z;
+                pt.localPosition = tie - axis * Style.PegTie.z;
             }
         }
 
@@ -1187,17 +1193,24 @@ namespace RealisticSkies
         // ---------------- model ----------------
         // Built by docs/make_traverse.py.
 
-        private static Material faceMat, woodMat, holeMat, edgeMat, pegMat, cordMat, ringMat;
-        private static Dictionary<string, Mesh> parts;
-
-        private static Texture2D Tex(string file, bool linear)
+        /// <summary>A style's meshes and materials, loaded once.</summary>
+        internal sealed class StyleAssets
         {
-            Texture2D t = ModResources.Texture("TraverseBoard/" + file, linear, out bool shared);
+            public Dictionary<string, Mesh> parts;
+            public Material face, back, hole, edge, peg, cord;
+        }
+
+        private static readonly Dictionary<string, StyleAssets> assetsById = new Dictionary<string, StyleAssets>();
+        private static Material ringMat;
+
+        private static Texture2D Tex(string folder, string file, bool linear)
+        {
+            Texture2D t = ModResources.Texture(folder + "/" + file, linear, out bool shared);
             if (t == null) return null;
             t.anisoLevel = 8;
             if (!shared)
             {
-                t.name = "traverse board " + file;
+                t.name = folder + " " + file;
                 t.wrapMode = TextureWrapMode.Repeat;
                 if (file.Contains("albedo")) t.Compress(true);
                 t.Apply(false, true);
@@ -1205,11 +1218,12 @@ namespace RealisticSkies
             return t;
         }
 
-        private static Material MakeMaterial(Shader sh, string name, string prefix, bool gloss = true)
+        /// <summary>A Standard material from a texture set (prefix): metal in the metal/gloss map's R (gold, brass), smoothness in its A.</summary>
+        private static Material MakeMaterial(Shader sh, string folder, string name, string prefix, bool gloss = true, float plainGloss = 0.08f)
         {
             var m = new Material(sh) { name = name };
-            Texture2D alb = Tex(prefix + "albedo.jpg", false), nm = Tex(prefix + "normal.png", true);
-            Texture2D mg = gloss ? Tex(prefix + "metalgloss.png", true) : null;
+            Texture2D alb = Tex(folder, prefix + "albedo.jpg", false), nm = Tex(folder, prefix + "normal.png", true);
+            Texture2D mg = gloss ? Tex(folder, prefix + "metalgloss.png", true) : null;
             if (alb != null) m.SetTexture("_MainTex", alb);
             m.SetFloat("_Metallic", 0f);
             if (mg != null)
@@ -1218,7 +1232,7 @@ namespace RealisticSkies
                 m.EnableKeyword("_METALLICGLOSSMAP");
                 m.SetFloat("_GlossMapScale", 1f);
             }
-            else m.SetFloat("_Glossiness", 0.08f);
+            else m.SetFloat("_Glossiness", plainGloss);
             if (nm != null)
             {
                 m.SetTexture("_BumpMap", nm);
@@ -1228,11 +1242,12 @@ namespace RealisticSkies
             return m;
         }
 
-        private static bool LoadModel()
+        /// <summary>A style's model and materials (null: its files are missing).</summary>
+        private static StyleAssets LoadModel(TraverseStyle s)
         {
-            if (parts != null) return true;
-            byte[] bin = ModResources.Read("TraverseBoard/traverse.bin", out _);
-            if (bin == null) return false;
+            if (assetsById.TryGetValue(s.Id, out StyleAssets have)) return have;
+            byte[] bin = ModResources.Read(s.Folder + "/traverse.bin", out _);
+            if (bin == null) return null;
             var found = new Dictionary<string, Mesh>();
             using (var r = new BinaryReader(new MemoryStream(bin)))
             {
@@ -1248,7 +1263,7 @@ namespace RealisticSkies
                     for (int i = 0; i < n; i++) uv[i] = new Vector2(r.ReadSingle(), r.ReadSingle());
                     var tris = new int[r.ReadInt32()];
                     for (int i = 0; i < tris.Length; i++) tris[i] = r.ReadInt32();
-                    var mesh = new Mesh { name = "traverse board " + name };
+                    var mesh = new Mesh { name = s.Folder + " " + name };
                     if (n > 65000) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                     mesh.vertices = v; mesh.normals = nn; mesh.uv = uv;
                     mesh.triangles = tris;
@@ -1259,43 +1274,58 @@ namespace RealisticSkies
             }
             foreach (string need in new[] { "face", "back", "edge", "holes", "peg", "anchors" })
             {
-                if (!found.ContainsKey(need)) throw new Exception("traverse.bin has no part " + need);
+                if (!found.ContainsKey(need)) throw new Exception(s.Folder + "/traverse.bin has no part " + need);
             }
             Shader sh = Shader.Find("Standard") ?? Shader.Find("Legacy Shaders/Diffuse");
-            faceMat = MakeMaterial(sh, "traverse face", "face_");
-            woodMat = MakeMaterial(sh, "traverse wood", "wood_");
-            holeMat = new Material(woodMat) { name = "traverse holes", color = new Color(0.36f, 0.29f, 0.23f) };
-            edgeMat = MakeMaterial(sh, "traverse edge", "edge_");
-            pegMat = MakeMaterial(sh, "traverse peg", "peg_");
-            cordMat = MakeMaterial(sh, "traverse cord", "cord_", false);
-            Shader ds = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
-            ringMat = new Material(ds) { name = "traverse aim ring" };
-            parts = found;
-            return true;
+            string f = s.Folder, id = s.Id;
+            var a = new StyleAssets { parts = found };
+            a.face = MakeMaterial(sh, f, "traverse face " + id, "face_");
+            // the holes are lined with the bare wood (wood_), tinted darker; the back has its own set
+            // (the European board's back is the same bare pine)
+            Material wood = MakeMaterial(sh, f, "traverse wood " + id, "wood_");
+            a.back = s.BackSet == "wood_" ? wood : MakeMaterial(sh, f, "traverse back " + id, s.BackSet);
+            a.hole = new Material(wood) { name = "traverse holes " + id, color = s.HoleTint };
+            a.edge = MakeMaterial(sh, f, "traverse edge " + id, "edge_");
+            a.peg = MakeMaterial(sh, f, "traverse peg " + id, "peg_");
+            a.cord = MakeMaterial(sh, f, "traverse cord " + id, "cord_", false, s.CordGloss);
+            if (ringMat == null)
+            {
+                Shader ds = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
+                ringMat = new Material(ds) { name = "traverse aim ring" };
+            }
+            assetsById[id] = a;
+            return a;
         }
 
-        private static GameObject Part(string mesh, Material mat, Transform parent, int layer, string name = null)
+        private static GameObject Part(StyleAssets a, string mesh, Material mat, Transform parent, int layer, string name = null)
         {
             var go = new GameObject(name ?? mesh);
             go.layer = layer;
             go.transform.SetParent(parent, false);
-            go.AddComponent<MeshFilter>().sharedMesh = parts[mesh];
+            go.AddComponent<MeshFilter>().sharedMesh = a.parts[mesh];
             go.AddComponent<MeshRenderer>().sharedMaterial = mat;
             return go;
         }
 
         // ---------------- shops ----------------
 
-        /// <summary>Sold wherever the cross-staff is, in every Difficulty.</summary>
+        /// <summary>
+        /// Sold wherever the cross-staff is, in every Difficulty: each region's shops their own board
+        /// (Aestrin the European, the Emerald Archipelago the junk's, Al'Ankh the pilot's star board).
+        /// </summary>
         internal static void AddToShop(Transform shop, int island)
         {
             if (shop == null) return;
+            PortRegion region = RegionOf(shop);
+            TraverseStyle s = TraverseStyle.ForRegion(region);
+            if (!registered.Contains(s.Id)) s = TraverseStyle.Aestrin;           // its files are missing
+            Debug.Log("RealisticSkies: island " + island + " (" + region + ") sells the " + s.ItemName);
             foreach (ShopItemSpawner sp in shop.GetComponentsInChildren<ShopItemSpawner>(true))
             {
                 SaveablePrefab sv = sp.itemPrefab != null ? sp.itemPrefab.GetComponent<SaveablePrefab>() : null;
                 if (sv == null || sv.prefabIndex != 703) continue;
                 GameObject clone = UnityEngine.Object.Instantiate(sp.gameObject, sp.transform.parent);
-                clone.name = ItemName;
+                clone.name = s.ItemName;
                 if (ShopSpots.TryGet(ShopSpots.TraverseBoard, island, out ShopSpots.Spot spot))
                 {
                     ShopSpots.Apply(clone.transform, shop, spot);
@@ -1313,41 +1343,68 @@ namespace RealisticSkies
                 if (r != null) r.enabled = false;
                 var hook = clone.AddComponent<LoreSpawnerHook>();
                 hook.spawner = csp;
-                hook.prefabIndex = PrefabIndex;
+                hook.prefabIndex = s.Prefab;
                 ShopSpots.RegisterSpawner(ShopSpots.TraverseBoard, island, clone.transform);
                 break;
             }
         }
 
+        /// <summary>The region of the port nearest a shop (the game's own PortRegion), none if no port is found.</summary>
+        private static PortRegion RegionOf(Transform shop)
+        {
+            Port[] ports = Port.ports != null && Port.ports.Length > 0 ? Port.ports : UnityEngine.Object.FindObjectsOfType<Port>();
+            Port best = null;
+            float bestD = float.MaxValue;
+            if (ports != null)
+            {
+                foreach (Port p in ports)
+                {
+                    if (p == null) continue;
+                    float d = (p.transform.position - shop.position).sqrMagnitude;
+                    if (d < bestD) { bestD = d; best = p; }
+                }
+            }
+            return best != null ? best.region : PortRegion.none;
+        }
+
         // ---------------- prefab ----------------
 
         private static GameObject holder;
+        private static readonly HashSet<string> registered = new HashSet<string>();
 
+        /// <summary>The three boards, 718 / 719 / 720 (TraverseStyle).</summary>
         internal static void Register(PrefabsDirectory dir)
         {
             if (holder != null || dir == null || dir.directory == null) return;
             if (dir.directory.Length <= SourceIndex || dir.directory[SourceIndex] == null)
             {
-                Debug.LogWarning("RealisticSkies: vanilla scroll (prefab 91) not found, no traverse board");
+                Debug.LogWarning("RealisticSkies: vanilla scroll (prefab 91) not found, no traverse boards");
                 return;
             }
-            if (dir.directory.Length > PrefabIndex && dir.directory[PrefabIndex] != null)
+            holder = new GameObject("RealisticSkies traverse board holder");
+            holder.SetActive(false);
+            UnityEngine.Object.DontDestroyOnLoad(holder);
+            foreach (TraverseStyle s in TraverseStyle.All) Register(dir, s);
+        }
+
+        private static void Register(PrefabsDirectory dir, TraverseStyle s)
+        {
+            int index = s.Prefab;
+            if (dir.directory.Length > index && dir.directory[index] != null)
             {
-                Debug.LogWarning("RealisticSkies: prefab " + PrefabIndex + " is already taken, no traverse board");
+                Debug.LogWarning("RealisticSkies: prefab " + index + " is already taken, no " + s.ItemName);
                 return;
             }
             try
             {
-                if (!LoadModel())
+                StyleAssets a = LoadModel(s);
+                if (a == null)
                 {
-                    Debug.LogWarning("RealisticSkies: traverse board model missing, no traverse board");
+                    Debug.LogWarning("RealisticSkies: " + s.Folder + " model missing, no " + s.ItemName);
                     return;
                 }
-                holder = new GameObject("RealisticSkies traverse board holder");
-                holder.SetActive(false);
-                UnityEngine.Object.DontDestroyOnLoad(holder);
                 GameObject go = UnityEngine.Object.Instantiate(dir.directory[SourceIndex], holder.transform);
-                go.name = PrefabIndex + " " + ItemName;
+                go.name = index + " " + s.ItemName;
 
                 ShipItemScroll old = go.GetComponent<ShipItemScroll>();
                 ModItemTraverseBoard item = go.AddComponent<ModItemTraverseBoard>();
@@ -1363,21 +1420,23 @@ namespace RealisticSkies
                 {
                     if (c != box) UnityEngine.Object.DestroyImmediate(c);
                 }
-                box.center = new Vector3(0f, -0.045f, -0.008f);
-                box.size = new Vector3(0.392f, 0.553f, 0.016f);
+                // the board's bounds (heart, crest or finial included), the thickness of the board
+                Rect bb = s.Bounds;
+                box.center = new Vector3(bb.center.x, bb.center.y, -T / 2f);
+                box.size = new Vector3(bb.width, bb.height, T);
 
                 // the root shows the face: the wall-attach ghost draws the root's mesh
-                go.GetComponent<MeshFilter>().sharedMesh = parts["face"];
-                go.GetComponent<MeshRenderer>().sharedMaterial = faceMat;
+                go.GetComponent<MeshFilter>().sharedMesh = a.parts["face"];
+                go.GetComponent<MeshRenderer>().sharedMaterial = a.face;
                 int layer = go.layer;
-                Part("back", woodMat, go.transform, layer);
-                Part("edge", edgeMat, go.transform, layer);
-                Part("holes", holeMat, go.transform, layer);
-                Part("anchors", pegMat, go.transform, layer);
+                Part(a, "back", a.back, go.transform, layer);
+                Part(a, "edge", a.edge, go.transform, layer);
+                Part(a, "holes", a.hole, go.transform, layer);
+                Part(a, "anchors", a.peg, go.transform, layer);
                 for (int i = 0; i < 12; i++)
                 {
-                    GameObject peg = Part("peg", pegMat, go.transform, layer, "peg" + i);
-                    peg.transform.localPosition = AnchorHole(i);
+                    GameObject peg = Part(a, "peg", a.peg, go.transform, layer, "peg" + i);
+                    peg.transform.localPosition = AnchorHole(s, i);
                 }
                 foreach (MeshRenderer r in go.GetComponentsInChildren<MeshRenderer>(true))
                 {
@@ -1385,7 +1444,7 @@ namespace RealisticSkies
                     r.receiveShadows = true;
                 }
 
-                item.name = ItemName;
+                item.name = s.ItemName;
                 item.amount = 0f;
                 item.health = 0f;
                 item.holdDistance = 0.55f;
@@ -1408,17 +1467,18 @@ namespace RealisticSkies
                 ht.Field("rotX").SetValue(0f);
                 ht.Field("rotZ").SetValue(0f);
 
-                go.GetComponent<SaveablePrefab>().prefabIndex = PrefabIndex;
-                if (dir.directory.Length <= PrefabIndex)
+                go.GetComponent<SaveablePrefab>().prefabIndex = index;
+                if (dir.directory.Length <= index)
                 {
-                    Array.Resize(ref dir.directory, PrefabIndex + 5);
+                    Array.Resize(ref dir.directory, index + 5);
                 }
-                dir.directory[PrefabIndex] = go;
-                Debug.Log("RealisticSkies: added the traverse board as prefab " + PrefabIndex);
+                dir.directory[index] = go;
+                registered.Add(s.Id);
+                Debug.Log("RealisticSkies: added the " + s.ItemName + " as prefab " + index);
             }
             catch (Exception e)
             {
-                Debug.LogWarning("RealisticSkies: could not build the traverse board: " + e);
+                Debug.LogWarning("RealisticSkies: could not build the " + s.ItemName + ": " + e);
             }
         }
     }
@@ -1426,7 +1486,7 @@ namespace RealisticSkies
     /// <summary>One board's pegs and bookkeeping.</summary>
     internal class TraverseState
     {
-        public readonly int[] place = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };    // -1 out; a point 0-31 (rose) or a column 0-11 (grid)
+        public readonly int[] place = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };    // -1 out; a point (rose: 0-31, or 0-23 on the junk's board) or a column 0-11 (grid)
         public readonly bool[] copied = new bool[6], byHand = new bool[6];
         public readonly int[] cycleOf = { -1, -1, -1, -1, -1, -1 };      // the board (day * 2 + half) each period's pegs went in on
         public int cycle = -1, measKey = -1;
@@ -1434,6 +1494,12 @@ namespace RealisticSkies
         public double sumE, sumN, sumDist, sumTime;
 
         public void ResetSums() { sumE = sumN = sumDist = sumTime = 0.0; }
+
+        /// <summary>Rose pegs beyond the board's own points (24 on the junk's board) come out.</summary>
+        public void Fit(int points)
+        {
+            for (int i = 0; i < 6; i++) if (place[i] >= points) place[i] = -1;
+        }
 
         private static string D(double d) => d.ToString("R", CultureInfo.InvariantCulture);
 
@@ -1543,7 +1609,7 @@ namespace RealisticSkies
                 if (live != null && live.Count > 0)
                 {
                     var ids = new HashSet<int>();
-                    foreach (SaveablePrefab p in live) if (p != null && p.prefabIndex == ModItemTraverseBoard.PrefabIndex) ids.Add(p.instanceId);
+                    foreach (SaveablePrefab p in live) if (p != null && TraverseStyle.IsBoardPrefab(p.prefabIndex)) ids.Add(p.instanceId);
                     foreach (int id in new List<int>(lines.Keys)) if (!ids.Contains(id)) lines.Remove(id);
                 }
                 Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
