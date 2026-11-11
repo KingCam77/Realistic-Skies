@@ -16,7 +16,7 @@ namespace RealisticSkies
     /// date (the date of the evening). Hold the right mouse button to raise it, the handle down: bring
     /// the North Star into the rivet's hole and scroll the index onto Corvin (Shift: finely); let go and
     /// the index's edge reads the local time on the hour disc, to five minutes. With the journal carried
-    /// the time is written in it, and against the glass's (or the watch's) time at the zero meridian
+    /// the time is written in it, and against the glass's (or the watch's) time at the prime meridian
     /// it gives a rough longitude.
     ///
     /// The geometry (see docs/make_nocturnal.py, which draws the scales by the same numbers): angles

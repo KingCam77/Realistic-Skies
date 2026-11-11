@@ -15,7 +15,7 @@ namespace RealisticSkies
     /// - Lunar distance: the measured distance is written in by the quintant, and the time by the
     ///   pocket watch if one is carried (both can be corrected). The navigator picks the body it was
     ///   measured from (the Sun or one of today's stars in the Almanac's lunar table); the journal
-    ///   looks it up in the table and gives the time at the zero meridian and the watch's error.
+    ///   looks it up in the table and gives the time at the prime meridian and the watch's error.
     /// - Sights: every altitude read on the quintant is a new line, with the watch time if a watch is
     ///   carried. The navigator picks the body and says whether it was east or west; with the
     ///   latitude and the Almanac's GHA and Dec the journal works out the longitude.
@@ -24,7 +24,7 @@ namespace RealisticSkies
     ///
     /// Fields are typed on the keyboard. Kept per save slot in BepInEx/config/RealisticSkies/journal_slotN.txt.
     /// </summary>
-    internal static class NavJournal
+    internal static partial class NavJournal      // the Handbook page is in NavJournalHandbook.cs
     {
         private const int NoBody = int.MinValue;
 
@@ -266,7 +266,8 @@ namespace RealisticSkies
         {
             Load();
             errText = "+00:00:00";
-            AddNote("Day " + GameState.day + ": pocket watch regulated by the watchmaker, set to the time at the zero meridian");
+            timeSetAt = NavMath.NowAbs;
+            AddNote("Day " + GameState.day + ": pocket watch regulated by the watchmaker, set to the time at the prime meridian");
             Save();
         }
 
@@ -359,7 +360,7 @@ namespace RealisticSkies
             if (!double.IsNaN(gmt))
             {
                 double lon = NavMath.Wrap180((local - gmt) * 15.0);
-                line += "; " + NavMath.Clock(gmt).Substring(0, 5) + " at the zero meridian by " + by + ": longitude about " +
+                line += "; " + NavMath.Clock(gmt).Substring(0, 5) + " at the prime meridian by " + by + ": longitude about " +
                         Math.Abs(lon).ToString("0.0", CultureInfo.InvariantCulture) + "° " + (lon < 0 ? "W" : "E");
             }
             AddNote(line);
@@ -397,7 +398,7 @@ namespace RealisticSkies
             {
                 double mean = apparent - Celestial.EquationOfTime(Celestial.Now) / 15.0;
                 double lon = NavMath.Wrap180((mean - gmt) * 15.0);
-                line += "; " + NavMath.Clock(gmt).Substring(0, 5) + " at the zero meridian by " + by + ": longitude about " +
+                line += "; " + NavMath.Clock(gmt).Substring(0, 5) + " at the prime meridian by " + by + ": longitude about " +
                         Math.Abs(lon).ToString("0.0", CultureInfo.InvariantCulture) + "° " + (lon < 0 ? "W" : "E");
             }
             AddNote(line);
@@ -469,6 +470,8 @@ namespace RealisticSkies
             loadedSlot = SaveSlots.currentSlot;
             errText = lunarDist = lunarWatch = notes = latText = "";
             lunarAt = double.NaN;
+            timeSetAt = double.NaN;
+            lunarSaid = "";
             latSouth = false; useErr = true; lunarLimb = 0; lunarCorrect = true;
             lunarBody = Lunar.SunIndex;
             tab = 0;
@@ -488,6 +491,7 @@ namespace RealisticSkies
                         switch (k)
                         {
                             case "watchError": errText = v; break;
+                            case "timeSetAt": timeSetAt = Dbl(v); break;
                             case "lat": latText = v; break;
                             case "latSouth": latSouth = v == "1"; break;
                             case "useErr": useErr = v == "1"; break;
@@ -533,7 +537,7 @@ namespace RealisticSkies
             }
             notes = string.Join("\n", noteLines.ToArray());
             if (lunarBody >= Lunar.Stars.Count || lunarBody < Lunar.SunIndex) lunarBody = Lunar.SunIndex;
-            tab = Mathf.Clamp(tab, 0, 4);
+            tab = Mathf.Clamp(tab, 0, HandbookTab);
         }
 
         private static double Dbl(string s) =>
@@ -550,7 +554,7 @@ namespace RealisticSkies
                 var lines = new List<string>
                 {
                     "watchError=" + errText, "lat=" + latText, "latSouth=" + (latSouth ? 1 : 0), "useErr=" + (useErr ? 1 : 0), "tab=" + tab, "lunarBody=" + lunarBody, "lunarDist=" + lunarDist, "lunarWatch=" + lunarWatch, "lunarAt=" + Str(lunarAt),
-                    "lunarLimb=" + lunarLimb, "lunarCorrect=" + (lunarCorrect ? 1 : 0),
+                    "lunarLimb=" + lunarLimb, "lunarCorrect=" + (lunarCorrect ? 1 : 0), "timeSetAt=" + Str(timeSetAt),
                 };
                 foreach (SightLine s in sights) lines.Add("sight=" + Esc(s.alt) + "|" + Esc(s.time) + "|" + s.side + "|" + s.body);
                 foreach (ChronoLine c in chronos)
@@ -699,17 +703,16 @@ namespace RealisticSkies
             if (GUILayout.Button(latSouth ? "S" : "N", sButton, GUILayout.Width(44))) latSouth = !latSouth;
             double latDec = Latitude();
             GUILayout.Label(double.IsNaN(latDec) ? "" : " (" + latDec.ToString("0.00", CultureInfo.InvariantCulture) + "°)", sSmall, GUILayout.Width(90));
-            GUILayout.Label(GlassTime ? "Glass error" : "Watch error", sText, GUILayout.Width(170));
-            errText = GUILayout.TextField(errText, 12, sField, GUILayout.Width(140));
-            GUILayout.Label(" + fast, - slow", sSmall);
+            DrawShipTime();
             GUILayout.EndHorizontal();
+            DrawErrorByHand();
             GUILayout.Space(8);
 
             GUILayout.BeginHorizontal();
             bool chronoTab = ChronoTab;
             if (!chronoTab && tab == 3) tab = 0;
-            string[] tabs = chronoTab ? new[] { "Lunar distance", "Sights", "Chronometers", "Traverse", "Notes" } : new[] { "Lunar distance", "Sights", "Traverse", "Notes" };
-            int[] ids = chronoTab ? new[] { 0, 1, 3, 4, 2 } : new[] { 0, 1, 4, 2 };
+            string[] tabs = chronoTab ? new[] { "Lunar distance", "Sights", "Chronometers", "Traverse", "Notes", "Handbook" } : new[] { "Lunar distance", "Sights", "Traverse", "Notes", "Handbook" };
+            int[] ids = chronoTab ? new[] { 0, 1, 3, 4, 2, HandbookTab } : new[] { 0, 1, 4, 2, HandbookTab };
             for (int i = 0; i < tabs.Length; i++)
             {
                 if (GUILayout.Button(tabs[i], ids[i] == tab ? sTabOn : sTab, GUILayout.Height(40))) { tab = ids[i]; picking = -1; }
@@ -722,6 +725,7 @@ namespace RealisticSkies
             else if (tab == 1) DrawSights();
             else if (tab == 3) DrawChronometers();
             else if (tab == 4) DrawTraverse();
+            else if (tab == HandbookTab) DrawHandbook();
             else DrawNotes();
 
             GUI.DragWindow(new Rect(0, 0, 10000, 60));
@@ -739,7 +743,7 @@ namespace RealisticSkies
 
         private static void DrawLunar()
         {
-            GUILayout.Label("Lunar distance: the time at the zero meridian", sHead);
+            GUILayout.Label("Lunar distance: the time at the prime meridian", sHead);
 
             // the body: one of today's table, chosen by the navigator
             List<int> bodies = TodaysBodies();
@@ -821,63 +825,12 @@ namespace RealisticSkies
             double h0 = Math.Floor(gmt);
             GUILayout.Label("From the Almanac:  " + NavMath.Clock(h0) + "  " + NavMath.Angle(NavMath.TableDistance(lunarBody, h0)) +
                             "     " + NavMath.Clock(h0 + 1) + "  " + NavMath.Angle(NavMath.TableDistance(lunarBody, h0 + 1)), sResult);
-            GUILayout.Label("Time at the zero meridian:  <b>" + NavMath.Clock(gmt) + "</b>", sResult);
-            double err = double.IsNaN(watch) ? double.NaN : Celestial.Repeat(watch - gmt + 12.0, 24.0) - 12.0;
-            if (GlassTime)
-            {
-                if (!double.IsNaN(err))
-                {
-                    GUILayout.Label("The ship's glass is " + (err >= 0 ? "fast" : "slow") + " by <b>" + NavMath.Span(Math.Abs(err)).Substring(1) + "</b>", sResult);
-                }
-                GUILayout.Space(8);
-                GUILayout.BeginHorizontal();
-                GUI.enabled = !double.IsNaN(err);
-                if (GUILayout.Button("Take this as the glass error", sButton, GUILayout.Width(360)))
-                {
-                    errText = (err < 0 ? "-" : "+") + NavMath.Clock(Math.Abs(err));
-                    AddNote("Day " + (int)Math.Floor(gmt / 24.0) + ", " + NavMath.Clock(gmt) + " at the zero meridian: lunar, " + Lunar.Name(lunarBody) + " " +
-                            NavMath.Angle(dist) + ", glass " + (err >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(err)).Substring(1));
-                    Save();
-                    UISoundPlayer.instance.PlayParchmentSound();
-                }
-                SetGlassButton(gmt, true);
-                GUI.enabled = true;
-                GUILayout.EndHorizontal();
-                return;
-            }
-            GUILayout.Label("Your watch is " + (err >= 0 ? "fast" : "slow") + " by <b>" + NavMath.Span(Math.Abs(err)).Substring(1) + "</b>", sResult);
-            GUILayout.Space(8);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Take this as the watch error", sButton, GUILayout.Width(360)))
-            {
-                errText = (err < 0 ? "-" : "+") + NavMath.Clock(Math.Abs(err));
-                int day = (int)Math.Floor(gmt / 24.0);
-                AddNote("Day " + day + ", " + NavMath.Clock(gmt) + " at the zero meridian: lunar, " + Lunar.Name(lunarBody) + " " +
-                        NavMath.Angle(dist) + ", watch " + (err >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(err)).Substring(1));
-                Save();
-                UISoundPlayer.instance.PlayParchmentSound();
-            }
-            ModItemPocketWatch w = Watch();
-            GUI.enabled = w != null && Mode.PocketWatches == Keeping.Imperfect;
-            if (GUILayout.Button("Set the watch right by it", sButton, GUILayout.Width(360)))
-            {
-                // the hands put back by the error found: from now on the watch tells the zero meridian's time
-                w.Correct(err);
-                errText = "+00:00:00";
-                lunarWatch = NavMath.Clock(Celestial.Repeat(watch - err, 24.0));
-                AddNote("Day " + (int)Math.Floor(gmt / 24.0) + ": watch set right by the lunar (it was " + (err >= 0 ? "fast " : "slow ") +
-                        NavMath.Span(Math.Abs(err)).Substring(1) + ")");
-                Save();
-                UISoundPlayer.instance.PlayUISound(UISounds.winchClick, 0.15f, 2.2f);
-            }
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
-            GUILayout.Space(4);
-            SetGlassButton(gmt, false);
+            GUILayout.Label("Time at the prime meridian:  <b>" + NavMath.Clock(gmt) + "</b>", sResult);
+            DrawLunarSet(gmt, watch, dist);      // NavJournalShipTime.cs
         }
 
         /// <summary>
-        /// "Set the ship's glass by it": the zero meridian's time at the sight, against the true moment it
+        /// "Set the ship's glass by it": the prime meridian's time at the sight, against the true moment it
         /// was taken; from then on the watch glass keeps that reckoning, and its error with it. In the
         /// later eras too, for whoever wants it.
         /// </summary>
@@ -894,10 +847,10 @@ namespace RealisticSkies
                 foreach (ModItemWatchGlass g in glasses) g.SetBy(offset);
                 if (clearsError) errText = "+00:00:00";
                 double next = Math.Ceiling(NavMath.NowAbs + offset + 1e-6);
-                AddNote("Day " + (int)Math.Floor(gmt / 24.0) + ", " + NavMath.Clock(gmt) + " at the zero meridian by a lunar (" + Lunar.Name(lunarBody) +
+                AddNote("Day " + (int)Math.Floor(gmt / 24.0) + ", " + NavMath.Clock(gmt) + " at the prime meridian by a lunar (" + Lunar.Name(lunarBody) +
                         "): the ship's glass set, to start at " + NavMath.Clock(next).Substring(0, 5));
                 Save();
-                Notify("The ship's glass will be turned at " + NavMath.Clock(next).Substring(0, 5) + " by your reckoning");
+                Notify("The ship's glass is set. It keeps the time from now, and will be turned at " + NavMath.Clock(next).Substring(0, 5) + " by your reckoning");
             }
             GUI.enabled = was;
         }
@@ -931,7 +884,7 @@ namespace RealisticSkies
                 GUI.enabled = w != null && c.Running;
                 if (GUILayout.Button("Watch error from it", sButton, GUILayout.Width(250)))
                 {
-                    // the zero meridian's time is what it shows less its error; the watch is off from that
+                    // the prime meridian's time is what it shows less its error; the watch is off from that
                     double gmt = c.ShownHours - cErr;
                     double we = Celestial.Repeat(w.ShownHours - gmt + 12.0, 24.0) - 12.0;
                     errText = (we < 0 ? "-" : "+") + NavMath.Clock(Math.Abs(we));
@@ -995,13 +948,13 @@ namespace RealisticSkies
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Sights", sHead, GUILayout.Width(120));
-            useErr = GUILayout.Toggle(useErr, useErr ? (GlassTime ? "  [x] times corrected by the glass error" : "  [x] times corrected by the watch error") : "  [ ] times are already at the zero meridian", sText);
+            if (byHand) useErr = GUILayout.Toggle(useErr, useErr ? (GlassTime ? "  [x] times corrected by the glass error" : "  [x] times corrected by the watch error") : "  [ ] times are already at the prime meridian", sText);
             GUILayout.EndHorizontal();
             GUILayout.Label("Each altitude read on the quintant, quadrant or cross-staff is a new line. Say which body and on which side it was.", sSmall);
             double err = useErr ? NavMath.ParseTime(errText) : 0.0;
             if (useErr && double.IsNaN(err))
             {
-                GUILayout.Label("No watch error yet: find it from a lunar distance, or type it in.", sWarn);
+                GUILayout.Label("The ship's time is not set yet: take a lunar distance and set it on the Lunar distance page.", sWarn);
                 err = double.NaN;
             }
             double lat = Latitude();
@@ -1054,7 +1007,7 @@ namespace RealisticSkies
             if (s.body == NoBody) return "which body?";
             if (s.side == 0) return "east or west?";
             if (double.IsNaN(lat)) return "latitude?";
-            if (double.IsNaN(err)) return "watch error?";
+            if (double.IsNaN(err)) return "ship's time?";
             double watch = NavMath.ParseTime(s.time);
             if (double.IsNaN(watch)) return "time?";
             gmtAbs = NavMath.OnNearestDay(watch - err);
@@ -1080,7 +1033,7 @@ namespace RealisticSkies
         {
             if (Work(s, err, lat, out NavMath.Sight r, out double gmt) != null) return;
             int day = (int)Math.Floor(gmt / 24.0);
-            string line = "Day " + day + ", " + NavMath.Clock(gmt) + " at the zero meridian: " + Lunar.Name(s.body) + " " +
+            string line = "Day " + day + ", " + NavMath.Clock(gmt) + " at the prime meridian: " + Lunar.Name(s.body) + " " +
                           NavMath.Angle(NavMath.ParseAngle(s.alt)) + (s.side == 1 ? " east" : " west") +
                           ", lat " + NavMath.Lat(lat) + " (" + Decimal(lat) + "), lon " + NavMath.Lon(r.longitude) + " (" + Decimal(r.longitude) + ")" +
                           (s.body == Lunar.SunIndex ? ", local time " + NavMath.Clock(r.localTime) : "");

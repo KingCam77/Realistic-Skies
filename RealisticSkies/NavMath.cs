@@ -8,7 +8,7 @@ namespace RealisticSkies
     /// from its pages: a lunar distance looked up in the lunar table, and the longitude from an
     /// altitude with the Almanac's GHA and Dec; and reading and writing angles and times.
     ///
-    /// Times are "absolute hours": day * 24 + hour at the zero meridian. Angles in degrees.
+    /// Times are "absolute hours": day * 24 + hour at the prime meridian. Angles in degrees.
     /// </summary>
     internal static class NavMath
     {
@@ -86,7 +86,7 @@ namespace RealisticSkies
         internal static double NowAbs => Sun.sun == null ? 0 : GameState.day * 24.0 + Sun.sun.globalTime;
 
         /// <summary>
-        /// A time of day at the zero meridian placed on the right day: the one that puts it closest to
+        /// A time of day at the prime meridian placed on the right day: the one that puts it closest to
         /// now (a watch or a glass tells the hour, not the date).
         /// </summary>
         internal static double OnNearestDay(double hourOfDay)
@@ -119,7 +119,7 @@ namespace RealisticSkies
         }
 
         /// <summary>
-        /// Time at the zero meridian when the moon was 'distance' from the body, found as a navigator
+        /// Time at the prime meridian when the moon was 'distance' from the body, found as a navigator
         /// does: the two whole hours of the table that bracket the measured distance, and a linear
         /// split between them. Of all the matches within 12 hours of 'approx', the nearest wins.
         /// </summary>

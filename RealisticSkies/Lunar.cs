@@ -8,7 +8,7 @@ namespace RealisticSkies
     /// <summary>
     /// Lunar distances: the angle between the moon and a star (or the sun). The moon moves against
     /// the stars by about 0.7 deg per hour, so a measured distance plus the Almanac table gives the
-    /// time at the zero meridian without a clock.
+    /// time at the prime meridian without a clock.
     /// </summary>
     public static class Lunar
     {

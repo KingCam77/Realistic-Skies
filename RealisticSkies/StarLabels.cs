@@ -104,6 +104,7 @@ namespace RealisticSkies
                 Vector3 side = Quaternion.AngleAxis(OffsetAngle, c.up) * targetDir;
                 this.label.transform.position = c.position + side * Distance;
                 this.label.transform.rotation = Quaternion.LookRotation(side, c.up);
+                this.label.transform.localScale = Vector3.one * this.FovScale();
             }
             else
             {
@@ -150,6 +151,7 @@ namespace RealisticSkies
                     lr.SetPosition(0, eye + pa * Distance);
                     lr.SetPosition(1, eye + pb * Distance);
                     lr.startColor = lr.endColor = color;
+                    lr.startWidth = lr.endWidth = LineWidth * this.FovScale();
                 }
             }
             for (int i = 0; i < this.lines.Count; i++)
@@ -175,6 +177,19 @@ namespace RealisticSkies
                 this.lines.Add(lr);
             }
             return this.lines[index];
+        }
+
+        /// <summary>
+        /// The names and lines are things in the world at a fixed distance, sized for the game's own
+        /// field of view (76 degrees). With a wider view everything looks smaller, so they are made
+        /// larger by as much, to stay the same size on the screen.
+        /// </summary>
+        private float FovScale()
+        {
+            Camera main = Camera.main != null ? Camera.main : this.cam;
+            if (main == null) return 1f;
+            float k = Mathf.Tan(main.fieldOfView * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(38f * Mathf.Deg2Rad);
+            return Mathf.Clamp(k, 0.5f, 3f);
         }
 
         private bool FindCamera()

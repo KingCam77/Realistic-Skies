@@ -541,7 +541,7 @@ namespace RealisticSkies
                 }
             }
 
-            /// <summary>Hours since day 0 at the zero meridian (to time the measuring).</summary>
+            /// <summary>Hours since day 0 at the prime meridian (to time the measuring).</summary>
             internal static double GlobalHours => GameState.day * 24.0 + (Sun.sun != null ? Sun.sun.globalTime : 0f);
         }
 
@@ -1316,7 +1316,11 @@ namespace RealisticSkies
         internal static void AddToShop(Transform shop, int island)
         {
             if (shop == null) return;
-            PortRegion region = RegionOf(shop);
+            // measured from the island itself: this runs in the island scenery's Awake, and the game puts
+            // that scenery (and the shop in it) in its place only later, in IslandSceneryScene.Update;
+            // until then the shop stands wherever the scene was saved, and the nearest port is anyone's
+            Transform at = Refs.islands != null && island >= 0 && island < Refs.islands.Length && Refs.islands[island] != null ? Refs.islands[island] : shop;
+            PortRegion region = RegionOf(at);
             TraverseStyle s = TraverseStyle.ForRegion(region);
             if (!registered.Contains(s.Id)) s = TraverseStyle.Aestrin;           // its files are missing
             Debug.Log("RealisticSkies: island " + island + " (" + region + ") sells the " + s.ItemName);

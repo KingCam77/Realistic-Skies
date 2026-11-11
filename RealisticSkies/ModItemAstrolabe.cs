@@ -221,8 +221,6 @@ namespace RealisticSkies
             if (sun && sunLight < MinSunLight)
             {
                 // no spot on the vane to bring onto the hole (cloud or shade): nothing taken, and nothing said
-                Debug.Log("RealisticSkies: astrolabe, no spot: light " + sunLight.ToString("0.00") + ", veil " + veil.ToString("0.00") +
-                          ", probe " + sunProbe.Ratio.ToString("0.00"));      // DEBUG: remove before release
                 return;
             }
             float looked = ModItemCrossStaff.Altitude(sun ? -cam.transform.forward : cam.transform.forward);

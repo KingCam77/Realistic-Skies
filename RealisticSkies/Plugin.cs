@@ -98,10 +98,14 @@ namespace RealisticSkies
             configDifficulty = Config.Bind("Difficulty",
                                          "Difficulty",
                                          Difficulty.Chronometers,
+                                         "The difficulty a new game begins with; each saved game keeps its own. Changed while you are playing, it changes the game you are in. " +
                                          "Magellan: no chronometers or pocket watches in the shops, only sand glasses; an old chronometer you already have runs a few days and stops for good, a pocket watch stops at once; a lunar distance sets the ship's watch glass to your reckoning and the Navigator's Journal takes the time of each sight from it. " +
                                          "Chronometers: chronometers and pocket watches gain or lose a little each day; chronometers cost twice as much and only the watchmaker in the capitals can regulate them; pocket watches must be wound. " +
                                          "Vanilla: clocks and pocket watches are always right and need no winding; the sun as in the base game. " +
                                          "Magellan and Chronometers tilt the planet's axis as the Earth's and put the sun on its elliptical orbit. Custom: the options of the Custom section decide.");
+
+            // the difficulty lives in the save: the setting is what a new game begins with, and changing it mid-game changes that game
+            configDifficulty.SettingChanged += (s, e) => ModeInSave.SettingChanged();
 
             configCabinBoy = Config.Bind("Difficulty",
                                          "Cabin Boy Winds Chronometers",
@@ -177,31 +181,16 @@ namespace RealisticSkies
                                          true,
                                          "Call the Almanac's lettered stars by their sailors' names (A = Willow, W = Corvin, H = Lulu... see LORE.md) in the Almanac, star labels and lunar tables. The Almanac keeps the letter in brackets.");
 
-            configShopPlacement = Config.Bind("Debug", "Shop Placement", false,
-                                         "Place the mod's goods (books, sand glasses, watch glass, pocket watch, journal, instruments) in its shops by hand: put the item where it should lie, look at it and press the Shop Place Key. The spot is stored in Shop Spots below.");
-            configShopPlaceKey = Config.Bind("Debug", "Shop Place Key", new KeyboardShortcut(KeyCode.F8),
-                                         "Key that stores the spot of the item you are looking at (only while Shop Placement is on).");
-            configShopSpots = Config.Bind("Debug", "Shop Spots", "",
-                                         "Spots written by Shop Placement: kind island: x, y, z / qx, qy, qz, qw; ... in the shop's own space. Override the spots built into the plugin; leave empty to use those.");
 
-            configWatchmakerPickKey = Config.Bind("Debug", "Watchmaker Model Key", new KeyboardShortcut(KeyCode.F9),
-                                         "While Shop Placement is on: look at a trader and press it to make him the watchmaker's model; look at anything else (a small stall) to make it the watchmaker's stall.");
-            configWatchmakerPlaceKey = Config.Bind("Debug", "Watchmaker Place Key", new KeyboardShortcut(KeyCode.F10),
-                                         "While Shop Placement is on: puts the watchmaker where you look, facing you, in the capital you are in. With Shift: takes him away from it.");
-            configWatchmakerStallKey = Config.Bind("Debug", "Watchmaker Stall Key", new KeyboardShortcut(KeyCode.F11),
-                                         "While Shop Placement is on: puts the watchmaker's stall where you look, facing you. With Shift: takes it away.");
-            configWatchmakerTurnKey = Config.Bind("Debug", "Watchmaker Turn Key", new KeyboardShortcut(KeyCode.F7),
-                                         "While Shop Placement is on: turns the watchmaker or stall you put last by 15 degrees (Shift: the other way). Ctrl + Shop Place Key stores where he lays the watches: look at a pocket watch you have put there.");
-            configWatchmakerModel = Config.Bind("Debug", "Watchmaker Model", "",
-                                         "The trader copied as the watchmaker (written by the Watchmaker Model Key).");
             configWatchmakerLook = Config.Bind("Watchmaker", "Watchmaker Look", "",
                                          "How the watchmaker looks, written as the Sailwind Player Model mod writes a character (copy the Character line from its config), e.g. gender=1;head=3;hair=2;eyebrow=4;facialhair=18;headgear=2;torso=8;hips=4;legs=20;c_skin=5;c_hair=4;c_primary=4;c_secondary=3;c_leather=2;c_metal=4. That mod isn't needed. Set, it dresses the watchmakers of all three capitals; empty, each has his own look.");
-            configWatchmakerStallScale = Config.Bind("Debug", "Watchmaker Stall Scale", 0.4f,
-                                         "Size of the watchmaker's stall against the model it is copied from.");
-            configWatchmakerStall = Config.Bind("Debug", "Watchmaker Stall", "",
-                                         "The stall copied for the watchmaker (written by the Watchmaker Model Key).");
-            configWatchmakerSpots = Config.Bind("Debug", "Watchmaker Spots", "",
-                                         "Where the watchmaker, his stall and his bench are in each capital: kind island: x, y, z / qx, qy, qz, qw; ... in the space of the mod's shop there.");
+
+            configHints = Config.Bind("Training", "Instrument Hints", false,
+                                         "Hints for charts, books and instruments: look at one (or hold it) and press the Hint Key to read what it is for and how to use it. The Lost at Sea start turns this on, and off again when you land at Happy Bay.");
+
+            configHintKey = Config.Bind("Training", "Hint Key", new KeyboardShortcut(KeyCode.H),
+                                         "With Instrument Hints on: look at a chart, a book or an instrument (or hold it) and press this key to read what it is for and how to use it.");
+
 
             configJournalKey = Config.Bind("General",
                                          "Journal Key",
@@ -251,14 +240,30 @@ namespace RealisticSkies
 
         internal static ConfigEntry<KeyboardShortcut> configJournalKey;
 
-        internal static ConfigEntry<bool> configShopPlacement;
+        // The debug tools (placing the goods of the shops and the watchmaker by hand, the layout capture of the
+        // Lost at Sea ship, the asset census) are switched off for release: their settings are fixed
+        // values here, not entries of the config file, so nothing of them shows or answers a key. To
+        // work with them again, bind these as ConfigEntry in Awake (backups/debug-removed-2026-11-11).
+        internal sealed class Fixed<T>
+        {
+            public T Value;
+            public Fixed(T value) { Value = value; }
+        }
 
-        internal static ConfigEntry<KeyboardShortcut> configShopPlaceKey;
+        internal static readonly Fixed<bool> configShopPlacement = new Fixed<bool>(false);
 
-        internal static ConfigEntry<string> configShopSpots;
-        internal static ConfigEntry<KeyboardShortcut> configWatchmakerPickKey, configWatchmakerPlaceKey, configWatchmakerStallKey, configWatchmakerTurnKey;
-        internal static ConfigEntry<string> configWatchmakerModel, configWatchmakerStall, configWatchmakerSpots;
-        internal static ConfigEntry<float> configWatchmakerStallScale;
+        internal static readonly Fixed<KeyboardShortcut> configShopPlaceKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty);
+
+        internal static readonly Fixed<string> configShopSpots = new Fixed<string>("");
+
+        internal static ConfigEntry<bool> configHints;
+        internal static ConfigEntry<KeyboardShortcut> configHintKey;
+        internal static readonly Fixed<bool> configLayoutCapture = new Fixed<bool>(false);
+        internal static readonly Fixed<KeyboardShortcut> configLayoutKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty);
+        internal static readonly Fixed<KeyboardShortcut> configWatchmakerPickKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty), configWatchmakerPlaceKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty),
+            configWatchmakerStallKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty), configWatchmakerTurnKey = new Fixed<KeyboardShortcut>(KeyboardShortcut.Empty);
+        internal static readonly Fixed<string> configWatchmakerModel = new Fixed<string>(""), configWatchmakerStall = new Fixed<string>(""), configWatchmakerSpots = new Fixed<string>("");
+        internal static readonly Fixed<float> configWatchmakerStallScale = new Fixed<float>(0.4f);
         internal static ConfigEntry<string> configWatchmakerLook;
 
         private void Update()
@@ -266,12 +271,13 @@ namespace RealisticSkies
             NavJournal.Tick();
             ShopSpots.Tick();
             Watchmaker.Tick();
-            AssetCensus.Tick();
+            LostAtSeaNotes.Tick();
         }
 
         private void OnGUI()
         {
             NavJournal.OnGUI();
+            LostAtSeaNotes.OnGUI();
         }
 
         internal static ConfigEntry<int> configYearLen;

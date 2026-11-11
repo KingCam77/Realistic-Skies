@@ -13,7 +13,7 @@ namespace RealisticSkies
     ///  - the sun compass wrote the true latitude. Its shadow marks how far the sun stands from the
     ///    zenith, which is the latitude only when the sun is on the equator; with the axial tilt the
     ///    sun's declination is in it too. The text now gives the ring the shadow's tip lies on.
-    ///  - a clock wrote the true time at the zero meridian and the local time. A chronometer gains or
+    ///  - a clock wrote the true time at the prime meridian and the local time. A chronometer gains or
     ///    loses here, so the text now gives the time its own hands show, and no local time (the dial
     ///    has none; it would give the longitude away).
     /// </summary>

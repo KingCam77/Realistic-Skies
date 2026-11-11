@@ -22,7 +22,8 @@ namespace RealisticSkies
     {
         internal const float EarthTilt = 23.44f;
 
-        internal static Difficulty Level => Plugin.configDifficulty.Value;
+        /// <summary>The difficulty of the game being played: kept in its save (ModeInSave), the setting before a game begins.</summary>
+        internal static Difficulty Level => ModeInSave.Level;
 
         internal static float AxialTilt =>
             Level == Difficulty.Vanilla ? 0f : Level == Difficulty.Custom ? Plugin.configAxialTilt.Value : EarthTilt;

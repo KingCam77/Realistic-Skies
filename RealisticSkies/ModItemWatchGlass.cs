@@ -230,7 +230,7 @@ namespace RealisticSkies
         }
 
         /// <summary>Whether it keeps a reckoned time now.</summary>
-        internal bool Keeping => base.sold && this.auto && this.glassHour > 0 && this.pendingAt <= 0;
+        internal bool Keeping => base.sold && (this.pendingAt > 0 || (this.auto && this.glassHour > 0));
 
         /// <summary>
         /// The time it gives, absolute hours by its own reckoning: whole hours counted by its turns, and
@@ -244,14 +244,19 @@ namespace RealisticSkies
                 this.Advance(false);
                 this.Encode();
                 if (!this.Keeping) return double.NaN;
+                // just set, and waiting for its hour: the navigator counts the minutes to the turn
+                // himself, so the time is known at once and there is nothing to wait for
+                if (this.pendingAt > 0) return this.pendingHour - (this.pendingAt - GameHours());
                 return this.glassHour + Mathf.Clamp01(1f - this.Upper());
             }
         }
 
         /// <summary>
-        /// Set it by a worked-out time: the zero meridian's time is the true time plus this offset (by the
-        /// navigator's reckoning). It stops, and turns itself over at the next whole hour of that time,
-        /// striking that hour's bells; from then on it keeps the hours.
+        /// Set it by a worked-out time: the prime meridian's time is the true time plus this offset (by the
+        /// navigator's reckoning). At the next whole hour of that time it is turned over full, whatever
+        /// sand it had left, striking that hour's bells; from then on it keeps the hours. Until then it
+        /// goes on as it was (running or not), and the time is the reckoning itself (ReckonedTime): a
+        /// glass set anew is never without a time, and no one has to wait for the sand to run out.
         /// </summary>
         internal void SetBy(double offset)
         {
@@ -261,8 +266,6 @@ namespace RealisticSkies
             double hour = Math.Ceiling(now + offset + 1e-6);
             this.pendingHour = hour;
             this.pendingAt = hour - offset;
-            this.glassHour = 0;
-            this.auto = false;                  // the sand runs out meanwhile
             this.Encode();
         }
 
