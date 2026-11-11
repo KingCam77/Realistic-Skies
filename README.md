@@ -13,6 +13,7 @@ A complete overhaul of the skies and navigation in Sailwind adding more depth, r
   - [Seasons](#seasons)
   - [Constellations and Legends](#constellations-and-legends)
   - [Star Labels](#star-labels-training) ([reading atlas designations](#reading-atlas-designations))
+  - [Instrument Hints](#instrument-hints-training)
   - [Zodiacal Light](#zodiacal-light) · [Planets](#planets)
 - [Navigating by the Sun and the Moon](#navigating-by-the-sun-and-the-moon)
   - [Lunar distances](#lunar-distances)
@@ -51,28 +52,35 @@ A complete overhaul of the skies and navigation in Sailwind adding more depth, r
 
 ## Getting started
 
-<img width="1954" height="1439" alt="image" src="https://github.com/user-attachments/assets/930bc8fe-6989-4ee3-bd75-a896cd2bf87a" />
+**New to celestial navigation? Start with Lost at Sea.** In the new game menu, turn the choice of region one step past Aestrin. A storm has driven your ship off her course, somewhere south-west of Happy Bay; you have a week of food, a cargo to sell, every instrument you need, and the port's latitude and longitude. Choose your era, Magellan or Chronometers, and find your way in. The first days are clear and the wind is fair. If it goes wrong, the game's own Recovery takes you back to Oasis, the port you sailed from.
 
-Everything is sold in the three capitals, on the stall with the Star Map. To learn how to use it all, buy **The Navigator's Companion**, and outside the Magellan difficulty also **The Modern Navigator**. These two illustrated scrolls teach every instrument step by step, in game. This page is the quick reference.
+Three things help you learn, in that game and in any other:
+- **Hints.** With *Instrument Hints* on (Lost at Sea turns it on for you), look at a chart, a book or an instrument and press **`H`**: a short note tells what it is for and how to use it.
+- **The Handbook**, a page of the Navigator's Journal: short lessons on the time at the prime meridian, on finding latitude and longitude, and on dead reckoning, and the note of every instrument.
+- **The manuals.** **The Navigator's Companion**, and outside the Magellan difficulty also **The Modern Navigator**: two illustrated scrolls that teach every instrument step by step, in game.
+
+Everything is sold in the three capitals, on the stall with the Star Map. This page is the quick reference.
 
 Navigation comes down to two things:
 - **Latitude** (how far north or south you are) comes from the height of the Sun at noon or of a star at night.
-- **Longitude** (how far east or west) is the difference between your local time and the time at the zero meridian. Your local time comes from the sky. The zero meridian's time you have to carry with you, in a clock or a glass, or win back from the Moon.
+- **Longitude** (how far east or west) is the difference between your local time and the time at the prime meridian. Your local time comes from the sky. The prime meridian's time you have to carry with you, in a clock or a glass, or win back from the Moon.
 
 ## Difficulty
 One setting picks the age you sail in:
 
 | Difficulty | What you get |
 |---|---|
-| **Magellan** | The age before clocks. You sail with sand glasses, the cross-staff, the astrolabe, the quadrant and the nocturnal. No quintants, pocket watches or chronometers are sold, and a chronometer you already own runs a few days and stops. Your time at the zero meridian comes from lunar distances: work one out in the journal and set the ship's watch glass by it. |
+| **Magellan** | The age before clocks. You sail with sand glasses, the cross-staff, the astrolabe, the quadrant and the nocturnal. No quintants, pocket watches or chronometers are sold, and a chronometer you already own runs a few days and stops. Your time at the prime meridian comes from lunar distances: work one out in the journal and set the ship's watch glass by it. |
 | **Chronometers** (default) | Clocks are good but not perfect. Chronometers and pocket watches gain or lose a little every day, each at its own rate. Chronometers cost twice as much. The cabin boy winds them; you wind your pocket watch. |
 | **Vanilla** | Perfect clocks that need no winding, and the base game's sun. |
 | **Custom** | The options in the Custom section decide. |
 
 Magellan and Chronometers also turn on the seasons and the equation of time (see *Seasons*).
 
+**Every saved game keeps its own difficulty.** The setting is what a new game begins with. Change it while you are playing and the game you are in changes with it; your other saves stay as they were. A save made with an older version takes the setting the first time you play it.
+
 ##### Config Options
-- Difficulty: *Magellan, Chronometers, Vanilla or Custom. Default = Chronometers*
+- Difficulty: *the difficulty of a new game, and of the game you are playing when you change it: Magellan, Chronometers, Vanilla or Custom. Default = Chronometers*
 - Cabin Boy Winds Chronometers: *off: you wind each chronometer yourself with the scroll wheel. Default = true*
 - Custom only: Axial Tilt, Equation of Time, Quintant Clock, Chronometers (Perfect / Imperfect / Relic), Pocket Watches (Perfect / Imperfect / Dead), Chronometer Rate Jumps, Journal Keeps Time By The Glass.
 
@@ -112,7 +120,7 @@ The planet's axis can be tilted, as Earth's is. The sun then climbs higher in su
 
 ### Constellations and Legends
 
-<img width="2114" height="1439" alt="image" src="https://github.com/user-attachments/assets/9c87d144-c2ea-4d0f-8c10-47ce643e6949" />
+<img width="2114" height="1439" alt="image" src="https://github.com/user-attachments/assets/2608c7cd-b78c-4ef8-9aa4-52528723246d" />
 
 Sailors have drawn their own figures among the stars: Corvin's Sloop and the Widow's Grief around the North Star, the Harpoon with bright Oriens, the Ship's Cat, the Haymaker and his Bull, the Cobra near the southern pole, and more. Several of them point the way: the Arrowhead to the North Star, the Cobra's tail to the southern pole, Oriens to Milnead. Thirty-two stars and all seven planets have sailors' names. **[LORE.md](LORE.md)** describes all of them, and the **Sea Legends** scroll tells them in game.
 
@@ -121,7 +129,7 @@ Sailors have drawn their own figures among the stars: Corvin's Sloop and the Wid
 
 ### Star Labels (training)
 
-<img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/47ea9aad-5401-4ac0-8461-4f7efe9ddcb1" />
+<img width="1186" height="969" alt="image" src="https://github.com/user-attachments/assets/72e445e5-3b1e-4603-a34c-33150ac81f79" />
 
 Turn on Star Labels and, at night, look at a star or a planet: its name fades in next to it, with its atlas designation, SHA and Dec, and the constellation it belongs to, whose figure is drawn on the sky around it. Bright stars answer from a couple of degrees away, faint ones only when you look right at them. It is handy for learning the sky, and you don't need an instrument.
 
@@ -132,9 +140,21 @@ A designation like **2Y-061-165** tells you where to look in the Celestial Atlas
 - **061**: right ascension, 6.1h (SHA = 360 - 15 x 6.1 = 268.5).
 - **165**: declination, 16.5 degrees, south because of the Y.
 
+The names and the figures keep their size on the screen whatever field of view you play with.
+
 ##### Config Options
 - Star Labels: *show the names of stars and planets you look at. Default = false*
 - Constellation Lines: *also draw the figure of the constellation you look at. Default = true*
+
+### Instrument Hints (training)
+
+<img width="2535" height="1432" alt="image" src="https://github.com/user-attachments/assets/9d654645-2089-4616-bfab-587acd9ae26f" />
+
+Look at a chart, a book or an instrument, lying or hanging somewhere or in your hand, and press **`H`**. A note comes up: what the thing is for, how to use it, and for the instruments how they lead to your latitude or your longitude. Close it with its button or `Escape`. The Star Map's note has a button that turns the Star Labels on. All these notes can also be read in the journal's Handbook.
+
+##### Config Options
+- Instrument Hints: *the hints described above. The Lost at Sea start turns them on, and off again when you land at Happy Bay. Default = false*
+- Hint Key: *Default = `H`*
 
 ### Zodiacal Light
 Realistic Skies also adds the zodiacal light, the band of brightness along the ecliptic.
@@ -158,7 +178,7 @@ Before good clocks, navigators told the time from the Moon. It slides across the
 1. Take the quintant or the cross-staff and press **`L`**.
 2. Pick the Sun or a star from today's lunar table.
 3. Bring the near edge of the Moon onto it and take the reading.
-4. The Navigator's Journal looks it up for you and gives the time at the zero meridian. You can also do it by hand: find the two hours your distance falls between in the table and split the difference.
+4. The Navigator's Journal looks it up for you and gives the time at the prime meridian. You can also do it by hand: find the two hours your distance falls between in the table and split the difference.
 
 Turn your glass or note your watch the moment you take the sight, and carry that time to your next sights.
 
@@ -194,14 +214,20 @@ The Almanac is required for celestial navigation. It gives where every body of t
 
 #### Navigator's Journal
 
-<img width="1344" height="1107" alt="image" src="https://github.com/user-attachments/assets/4b6ecf02-4f72-4c60-865d-79d097f80482" />
+<img width="1344" height="1107" alt="image" src="https://github.com/user-attachments/assets/e0273613-da19-4b03-9989-730efac8e115" />
 
-About 130 crowns. Carry it, in hand or in a pocket, and your instruments write every reading into it with the time from your watch or glass; you can correct any value. Then sit down with the Almanac and it works out your sights:
-- **Lunar distance:** the time at the zero meridian, and how far off your watch is. One click sets the watch, or the ship's glass, by it.
-- **Sights:** every height is a line. Name the body and say whether it stood east or west of you, and you get your latitude and longitude.
+About 130 crowns. Carry it, in hand or in a pocket, and your instruments write every reading into it with the time from your watch or glass; you can correct any value. Then sit down with the Almanac and it works out your sights.
+
+At the top of every page stand your **latitude**, which you find yourself and write in, and the **ship's time**: the time at the prime meridian by your pocket watch (or the watch glass), how long ago it was set, and how far your longitude may be out by now. If something is missing it says what: no watch with you, the watch has stopped, or the time was never set.
+
+- **Lunar distance:** the time at the prime meridian, and how far off your watch is. One button, *Set the ship's time by this lunar*, puts your watch right; with no watch, or in Magellan, it sets the ship's glass. The journal tells you in words what it found.
+- **Sights:** every height is a line. Name the body and say whether it stood east or west of you, and you get your longitude.
 - **Chronometers:** each chronometer's error and rate, from the watchmaker's certificate or from comparing it with your watch.
 - **Traverse:** hold the journal and click a traverse board to copy its pegs in. It lists each two-hour leg and works out the course and distance made good, the difference of latitude and the departure.
-- **Notes:** free writing; the nocturnal's readings and today's date go here too.
+- **Notes:** free writing; the nocturnal's and the ring dial's readings and today's date go here too.
+- **Handbook:** short lessons (the time at the prime meridian, finding latitude, finding longitude, dead reckoning) and the note of every chart and instrument.
+
+If you would sooner keep your watch as it is and carry its error on paper, the **by hand** button beside the ship's time brings back the error field and the old buttons.
 
 The journal works out sums only with an Almanac at hand: held, in a pocket, or lying within a few steps. It takes your word for everything, so name the wrong star or side and you get the wrong position.
 
@@ -227,7 +253,7 @@ The Star Map is a map of the heavens: a chart of each pole and a band along the 
 
 #### The Navigator's Companion and The Modern Navigator
 Two illustrated manuals that teach the instruments step by step:
-- **The Navigator's Companion** (about 150 crowns, every difficulty): the Almanac, the journal, the glasses, the quadrant, the astrolabe, the cross-staff, lunar distances, the nocturnal and the ring dial.
+- **The Navigator's Companion** (about 150 crowns, every difficulty): the Almanac, the journal, the glasses, the quadrant, the astrolabe, the cross-staff, lunar distances, the nocturnal, the ring dial and the traverse boards.
 - **The Modern Navigator** (about 200 crowns, not sold in Magellan): the quintant, the pocket watch, the chronometers and the watchmaker.
 
 #### Sea Legends
@@ -242,7 +268,7 @@ A scroll of the sailors' sky, about 280 crowns: every constellation with an engr
 
 #### Quintant
 
-<img width="892" height="900" alt="image" src="https://github.com/user-attachments/assets/b761c956-4d5d-41ec-9131-8f587e9e63a8" />
+<img width="892" height="900" alt="image" src="https://github.com/user-attachments/assets/ea0d2910-eb71-46f1-948d-3290612e35de" />
 
 The Quintant measures heights and lunar distances precisely. It can be found at all of the locations (but not in Magellan). The Quintant is safe to put in your inventory with a reading; it only loses the reading when you start the game again.
 
@@ -261,7 +287,7 @@ The game's quadrant, now with a light plumb line that swings with the ship and s
 
 #### Cross-staff
 
-<img width="2048" height="1097" alt="image" src="https://github.com/user-attachments/assets/d8b55e7e-5f9d-469f-b5cc-48fc23ef63b0" />
+<img width="2048" height="1097" alt="image" src="https://github.com/user-attachments/assets/79c6e2fd-3896-4cab-abfb-f89310d7e74e" />
 
 Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. The nearer the cross-piece is to your eye, the wider the angle between its ends. Use it for heights and lunar distances. It is exactly as true as you lay its ends.
 
@@ -273,7 +299,7 @@ Jacob's staff, about 70 crowns: a rod with a cross-piece that slides along it. T
 
 #### Mariner's astrolabe
 
-<img width="1044" height="1019" alt="image" src="https://github.com/user-attachments/assets/88d94f98-4298-4470-8112-4c930faa9a0a" />
+<img width="1044" height="1019" alt="image" src="https://github.com/user-attachments/assets/eae519f4-19e2-45f8-a7d2-8dff990a1f08" />
 
 About 90 crowns: a heavy brass ring that hangs straight from your thumb, with a turning arm and a pinhole at each end. It needs no horizon, so it works on the darkest night. At sea it swings with the ship: catch the body as the swing passes the middle. Its scale counts from the top, as the old pilots counted; the journal writes down the height. It reads to ten minutes of arc.
 
@@ -293,9 +319,9 @@ The game's sun compass reads your latitude from the noon shadow, but its rings a
 
 #### Nocturnal
 
-<img width="1304" height="1432" alt="image" src="https://github.com/user-attachments/assets/509e447f-7057-4a98-9a53-f4c57bae697e" />
+<img width="1304" height="1432" alt="image" src="https://github.com/user-attachments/assets/cd256338-8a0c-469b-a5f8-45c052a2283d" />
 
-The night clock, about 50 crowns: a brass plate with a toothed hour disc and a long arm. Sight the North Star through the hole in its middle, swing the arm onto **Corvin**, the brightest star of Corvin's Sloop, and read your local time where the arm crosses the disc. You need no horizon and no tables. Compare it with the time at the zero meridian and you have a rough longitude every clear night. Far to the south Corvin sets for part of the night, and then you have to wait for it.
+The night clock, about 50 crowns: a brass plate with a toothed hour disc and a long arm. Sight the North Star through the hole in its middle, swing the arm onto **Corvin**, the brightest star of Corvin's Sloop, and read your local time where the arm crosses the disc. You need no horizon and no tables. Compare it with the time at the prime meridian and you have a rough longitude every clear night. Far to the south Corvin sets for part of the night, and then you have to wait for it.
 
 ##### Controls
 - `Scroll`: *set the night's date (after midnight it is still the evening's date)*
@@ -305,7 +331,7 @@ The night clock, about 50 crowns: a brass plate with a toothed hour disc and a l
 
 #### Ring dial
 
-<img width="1526" height="1256" alt="image" src="https://github.com/user-attachments/assets/a4f29e4c-c0c1-42d5-a532-4b549a7e248c" />
+<img width="1526" height="1256" alt="image" src="https://github.com/user-attachments/assets/8790dfa8-1d60-4d95-a420-fe28d67e82a4" />
 
 The daytime twin of the nocturnal, about 155 crowns: a brass sundial of two rings that works anywhere. Set your latitude and the date, hang it up, turn it until the spot of sunlight through its pinhole sits on the middle line, and read your sun time. Once it is on the line, the dial also points true north. It can't be read near noon or for a couple of days at the equinoxes. It needs the seasons: in Vanilla the Sun never leaves the equator, the inner ring always shades the hole, and it shows no spot.
 
@@ -323,9 +349,9 @@ About 100 and 150 crowns. Turn one over and the sand runs for half an hour or an
 
 #### Watch Glass
 
-<img width="1117" height="1000" alt="image" src="https://github.com/user-attachments/assets/1ca67e19-ca19-496b-98d8-4bc0faad7073" />
+<img width="1117" height="1000" alt="image" src="https://github.com/user-attachments/assets/d362b305-3d57-47b2-80bf-b682e730aa98" />
 
-About 300 crowns: an hour glass on a heavy stand that turns itself every hour and strikes the bells of the watch: 2, 4, 6, then 8 bells at the end of the watch. Set it on deck (nail it down if the sea is up) and start it at a known hour, or set it by a lunar distance from the journal. It is no clock, though: it wanders a few minutes a day, so set it again from the Moon every few days.
+About 300 crowns: an hour glass on a heavy stand that turns itself every hour and strikes the bells of the watch: 2, 4, 6, then 8 bells at the end of the watch. Set it on deck (nail it down if the sea is up) and start it at a known hour, or set it by a lunar distance from the journal. Set from the journal, it keeps the time at once, is turned over full at the next whole hour, and need not be stopped to be set again. It is no clock, though: it wanders about five minutes a day, so set it again from the Moon every few days.
 
 ##### Controls
 - `Right click`: *starts it, or stops it*
@@ -335,9 +361,9 @@ About 300 crowns: an hour glass on a heavy stand that turns itself every hour an
 
 #### Pocket Watch
 
-<img width="1423" height="1165" alt="image" src="https://github.com/user-attachments/assets/8dbc2aae-933f-4380-a95d-dbe2de3020b0" />
+<img width="1423" height="1165" alt="image" src="https://github.com/user-attachments/assets/4cd36eb9-5119-4886-8b28-c4217e384441" />
 
-The lunarian's deck watch, about 220 crowns, readable to the minute. Every watch gains or loses at its own rate, a few minutes a day, and it stops when it runs down (a winding lasts a day and a half). Find its error from a lunar distance and it carries the time to your next sights.
+The lunarian's deck watch, about 220 crowns, readable to the minute. Every watch gains or loses at its own rate, a good one a minute a day and a poor one four, and it stops when it runs down (a winding lasts a day and a half). Find its error from a lunar distance and it carries the time to your next sights.
 
 Model: [Pocket Watch](https://polyhaven.com/a/pocket_watch) by PierreB3D, Poly Haven (CC0).
 
@@ -377,7 +403,7 @@ The Planisphere is a more advanced star map, showing you what is visible and any
 
 #### Traverse board
 
-<img width="950" height="1074" alt="image" src="https://github.com/user-attachments/assets/30a8f779-9bcf-46c9-8240-4c28409bcc51" />
+<img width="950" height="1074" alt="image" src="https://github.com/user-attachments/assets/c335195e-cda1-418f-b77a-5944c8008bb2" />
 
 About 25 crowns: the painted board the helmsman kept by the binnacle. A compass rose with a ring of holes for every two hours of the watch, and a speed grid below it, one row for every two hours by twelve knots. Each peg hangs on a cord and swings with the ship. Peg the course steered and the speed the chip log reads for each two hours; at the end of the watch, copy the board into the journal and it works out where the ship has gone: the course and miles made good, in the same miles the chip log and a ruler on the chart count, and the difference of latitude and longitude in minutes of arc. Hang it on a lamp hook, stick it to any wall or lay it down.
 
