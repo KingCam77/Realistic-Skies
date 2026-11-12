@@ -38,7 +38,36 @@ namespace RealisticSkies
             }
         }
 
-        public static string Name(int index) => index == SunIndex ? "Sun" : Stars[index].name;
+        public static string Name(int index) =>
+            index == SunIndex ? "Sun" : IsPlanet(index) ? PlanetNames.Get(index - PlanetBase) : Stars[index].name;
+
+        // ---------------- planets, as bodies for a sight ----------------
+        // A planet is body PlanetBase + its Almanac number (1..7), well clear of the star indices, so a
+        // saved sight keeps its body whatever the star catalogue holds. Only the four planets the
+        // Almanac tabulates can be worked: Planet 2, 3, 5 and 6 (Lux, Ember, Leviathan, Pilgrim).
+
+        public const int PlanetBase = 1000;
+        public static readonly int[] AlmanacPlanets = { 2, 3, 5, 6 };
+
+        public static bool IsPlanet(int index) => index > PlanetBase && index <= PlanetBase + 7;
+
+        /// <summary>The Sun, a star of the catalogue, or a planet of the Almanac.</summary>
+        public static bool IsBody(int index) =>
+            index == SunIndex || (index >= 0 && index < Stars.Count) || (IsPlanet(index) && Array.IndexOf(AlmanacPlanets, index - PlanetBase) >= 0);
+
+        private static Planet PlanetOf(int number)
+        {
+            switch (number)       // the Almanac skips the home planet: its Planet 3 is planet4, and so on
+            {
+                case 1: return PlanetPatch.planet1;
+                case 2: return PlanetPatch.planet2;
+                case 3: return PlanetPatch.planet4;
+                case 4: return PlanetPatch.planet5;
+                case 5: return PlanetPatch.planet6;
+                case 6: return PlanetPatch.planet7;
+                default: return PlanetPatch.planet8;
+            }
+        }
 
         /// <summary>
         /// Sailors' names for the Almanac's lettered stars (see LORE.md). Letters are case sensitive:
@@ -118,6 +147,11 @@ namespace RealisticSkies
             {
                 gha = Celestial.SunGHA(t, hour);
                 dec = Celestial.SunDec(t);
+                return;
+            }
+            if (IsPlanet(index))
+            {
+                Celestial.PlanetGHADec(PlanetOf(index - PlanetBase), day, hour, out gha, out dec);      // as the Almanac prints it
                 return;
             }
             Star s = Stars[index];

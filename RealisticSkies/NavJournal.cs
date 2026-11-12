@@ -33,16 +33,16 @@ namespace RealisticSkies
             public string alt = "", time = "";
             public int side;                    // 0 not said, 1 east, 2 west
             public int body = NoBody;
+            public bool use;                    // ticked: counts in the mean longitude
         }
 
         // ---------------- what is written in it ----------------
 
-        private static string errText = "", lunarDist = "", lunarWatch = "", notes = "", latText = "";
+        private static string errText = "", notes = "", latText = "";
         private static bool latSouth, useErr = true;
         private static int lunarLimb;               // 0 not said, 1 near edge (to the star), 2 far edge
         private static bool lunarCorrect = true;    // add / take off the semi-diameter for the navigator
         private static int lunarBody = Lunar.SunIndex;
-        private static double lunarAt = double.NaN;     // the true time the lunar was taken (to set the glass by)
         private static int tab;
         private static readonly List<SightLine> sights = new List<SightLine>();
 
@@ -142,6 +142,7 @@ namespace RealisticSkies
             IsOpen = true;
             Refs.SetPlayerControl(false);
             MouseLook.ToggleMouseLookAndCursor(false);
+            LostAtSeaNotes.ClearLookText();     // the look text of whatever was looked at would drift while the journal is open
             UISoundPlayer.instance.PlayParchmentSound();
         }
 
@@ -241,7 +242,10 @@ namespace RealisticSkies
                 return g != null ? NavMath.Clock(Celestial.Repeat(g.ReckonedTime, 24.0)) : "";
             }
             ModItemPocketWatch w = Watch();
-            return w != null && Mode.PocketWatches != Keeping.Dead ? NavMath.Clock(w.ShownHours) : "";
+            if (w != null && Mode.PocketWatches != Keeping.Dead) return NavMath.Clock(w.ShownHours);
+            // no watch, but a fresh lunar: the journal's own reckoning, while it lasts (NavJournalShipTime.cs)
+            double held = HeldGmt();
+            return double.IsNaN(held) ? "" : NavMath.Clock(held);
         }
 
         private static bool GlassTime => Mode.GlassTimeInJournal;
@@ -267,7 +271,7 @@ namespace RealisticSkies
             Load();
             errText = "+00:00:00";
             timeSetAt = NavMath.NowAbs;
-            AddNote("Day " + GameState.day + ": pocket watch regulated by the watchmaker, set to the time at the prime meridian");
+            AddNote(DayName(GameState.day) + ": pocket watch regulated by the watchmaker, set to the time at the prime meridian");
             Save();
         }
 
@@ -280,9 +284,12 @@ namespace RealisticSkies
             c.t2 = at;
             c.e2 = 0;
             c.cert = rate;
-            AddNote("Day " + GameState.day + ": chronometer No. " + serial + " regulated by the watchmaker, rate " + RateText(rate));
+            AddNote(DayName(GameState.day) + ": chronometer No. " + serial + " regulated by the watchmaker, rate " + RateText(rate));
             Save();
         }
+
+        /// <summary>A game day as the mod names it everywhere: its date ("Autumn 4"). Never a bare day number: the game's own log counts days from nought.</summary>
+        private static string DayName(int gameDay) => ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(gameDay));
 
         private static void AddNote(string line)
         {
@@ -322,10 +329,15 @@ namespace RealisticSkies
                 return;
             }
             Load();
-            lunarDist = AngleField(distance);
-            lunarWatch = WatchNow();
-            lunarAt = NavMath.NowAbs;
-            lunarLimb = limb;       // which edge it was: the navigator says (the cross-staff always takes the near one)
+            string lunarWatch = WatchNow();
+            double now = NavMath.NowAbs;
+            // a new line of the set; lines left empty, and sights too old to be averaged with this one, go
+            lunars.RemoveAll(l => l.dist.Trim().Length == 0 || (!double.IsNaN(l.at) && (now - l.at > HoldHours || l.at > now)));
+            // which edge it was: the cross-staff always takes the near one; else as the navigator said for the sight before
+            if (limb == 0 && lunars.Count > 0) limb = lunars[0].limb;
+            lunars.Insert(0, new LunarLine { dist = AngleField(distance), watch = lunarWatch, at = now, limb = limb });
+            if (lunars.Count > MaxLunars) lunars.RemoveAt(lunars.Count - 1);
+            lunarScroll = Vector2.zero;
             tab = 0;
             Notify("Journal: lunar distance " + NavMath.Angle(distance) + (lunarWatch.Length > 0 ? " at " + lunarWatch : "") + " written down");
             Save();
@@ -356,7 +368,8 @@ namespace RealisticSkies
                     by = useErr ? "the watch less its error" : "the watch";
                 }
             }
-            string line = "Day " + GameState.day + ", night of " + night + ": nocturnal " + ModItemNocturnal.Hm(local) + " local";
+            if (double.IsNaN(gmt) && !double.IsNaN(HeldGmt())) { gmt = HeldGmt(); by = "your reckoning from the lunar"; }
+            string line = DayName(GameState.day) + ", night of " + night + ": nocturnal " + ModItemNocturnal.Hm(local) + " local";
             if (!double.IsNaN(gmt))
             {
                 double lon = NavMath.Wrap180((local - gmt) * 15.0);
@@ -393,8 +406,17 @@ namespace RealisticSkies
                     by = useErr ? "the watch less its error" : "the watch";
                 }
             }
-            string line = "Day " + GameState.day + ", " + date + ": ring dial " + ModItemNocturnal.Hm(apparent) + " by the Sun";
-            if (!double.IsNaN(gmt))
+            if (double.IsNaN(gmt) && !double.IsNaN(HeldGmt())) { gmt = HeldGmt(); by = "your reckoning from the lunar"; }
+            // the dial tells the time only for the date its cursor is set to: set a week off, or by another
+            // calendar, it is out by tens of minutes and gives no sign of it. The journal knows the day.
+            string today = ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(GameState.day));
+            bool wrongDate = date != today;
+            string line = today + ": ring dial " + ModItemNocturnal.Hm(apparent) + " by the Sun";
+            if (wrongDate)
+            {
+                line += "; THE DIAL IS SET TO " + date + ", NOT TODAY'S DATE: its time is not to be trusted";
+            }
+            else if (!double.IsNaN(gmt))
             {
                 double mean = apparent - Celestial.EquationOfTime(Celestial.Now) / 15.0;
                 double lon = NavMath.Wrap180((mean - gmt) * 15.0);
@@ -402,7 +424,8 @@ namespace RealisticSkies
                         Math.Abs(lon).ToString("0.0", CultureInfo.InvariantCulture) + "° " + (lon < 0 ? "W" : "E");
             }
             AddNote(line);
-            // no pop-up of its own: the ring dial's reading has just been shown
+            // no pop-up of its own for a good reading (the ring dial has just shown it); one for a dial set to the wrong date
+            if (wrongDate) Notify("Journal: the ring dial is set to " + date + ", but today is " + today + ". Set its date (Shift + scroll).");
             Save();
         }
 
@@ -468,9 +491,12 @@ namespace RealisticSkies
         {
             if (loadedSlot == SaveSlots.currentSlot) return;
             loadedSlot = SaveSlots.currentSlot;
-            errText = lunarDist = lunarWatch = notes = latText = "";
-            lunarAt = double.NaN;
+            errText = notes = latText = "";
+            lunars.Clear();
+            var old = new LunarLine();          // journals written before the set of sights: one sight
             timeSetAt = double.NaN;
+            heldAt = double.NaN;
+            heldOffset = 0;
             lunarSaid = "";
             latSouth = false; useErr = true; lunarLimb = 0; lunarCorrect = true;
             lunarBody = Lunar.SunIndex;
@@ -492,6 +518,8 @@ namespace RealisticSkies
                         {
                             case "watchError": errText = v; break;
                             case "timeSetAt": timeSetAt = Dbl(v); break;
+                            case "heldAt": heldAt = Dbl(v); break;
+                            case "heldOffset": heldOffset = Dbl(v); if (double.IsNaN(heldOffset)) heldOffset = 0; break;
                             case "lat": latText = v; break;
                             case "latSouth": latSouth = v == "1"; break;
                             case "useErr": useErr = v == "1"; break;
@@ -499,15 +527,26 @@ namespace RealisticSkies
                             case "lunarCorrect": lunarCorrect = v == "1"; break;
                             case "tab": int.TryParse(v, out tab); break;
                             case "lunarBody": int.TryParse(v, out lunarBody); break;
-                            case "lunarDist": lunarDist = v; break;
-                            case "lunarWatch": lunarWatch = v; break;
-                            case "lunarAt": lunarAt = Dbl(v); break;
+                            case "lunarDist": old.dist = v; break;
+                            case "lunarWatch": old.watch = v; break;
+                            case "lunarAt": old.at = Dbl(v); break;
+                            case "lunar":
+                                string[] lp = v.Split('|');
+                                if (lunars.Count < MaxLunars)
+                                {
+                                    var ll = new LunarLine { dist = lp[0], watch = lp.Length > 1 ? lp[1] : "", at = lp.Length > 2 ? Dbl(lp[2]) : double.NaN, limb = -1 };
+                                    if (lp.Length > 3) int.TryParse(lp[3], out ll.limb);
+                                    if (lp.Length > 4) ll.use = lp[4] == "1";
+                                    lunars.Add(ll);
+                                }
+                                break;
                             case "sight":
                                 string[] p = v.Split('|');
                                 var sl = new SightLine { alt = p.Length > 0 ? p[0] : "", time = p.Length > 1 ? p[1] : "" };
                                 if (p.Length > 2) int.TryParse(p[2], out sl.side);
                                 if (p.Length > 3 && !int.TryParse(p[3], out sl.body)) sl.body = NoBody;
-                                if (sl.body != NoBody && (sl.body < Lunar.SunIndex || sl.body >= Lunar.Stars.Count)) sl.body = NoBody;
+                                if (sl.body != NoBody && !Lunar.IsBody(sl.body)) sl.body = NoBody;
+                                sl.use = p.Length > 4 && p[4] == "1";
                                 sights.Add(sl);
                                 break;
                             case "note": noteLines.Add(v); break;
@@ -536,6 +575,9 @@ namespace RealisticSkies
                 Debug.LogWarning("RealisticSkies: could not read the journal: " + e.Message);
             }
             notes = string.Join("\n", noteLines.ToArray());
+            if (lunars.Count == 0 && old.dist.Length > 0) { old.limb = -1; lunars.Add(old); }
+            // lines of a journal that kept one edge for the whole page
+            foreach (LunarLine l in lunars) if (l.limb < 0 || l.limb > 3) l.limb = lunarCorrect ? Mathf.Clamp(lunarLimb, 0, 2) : 3;
             if (lunarBody >= Lunar.Stars.Count || lunarBody < Lunar.SunIndex) lunarBody = Lunar.SunIndex;
             tab = Mathf.Clamp(tab, 0, HandbookTab);
         }
@@ -553,10 +595,11 @@ namespace RealisticSkies
                 Directory.CreateDirectory(Path.GetDirectoryName(FilePath));
                 var lines = new List<string>
                 {
-                    "watchError=" + errText, "lat=" + latText, "latSouth=" + (latSouth ? 1 : 0), "useErr=" + (useErr ? 1 : 0), "tab=" + tab, "lunarBody=" + lunarBody, "lunarDist=" + lunarDist, "lunarWatch=" + lunarWatch, "lunarAt=" + Str(lunarAt),
-                    "lunarLimb=" + lunarLimb, "lunarCorrect=" + (lunarCorrect ? 1 : 0), "timeSetAt=" + Str(timeSetAt),
+                    "watchError=" + errText, "lat=" + latText, "latSouth=" + (latSouth ? 1 : 0), "useErr=" + (useErr ? 1 : 0), "tab=" + tab, "lunarBody=" + lunarBody,
+                    "lunarLimb=" + lunarLimb, "lunarCorrect=" + (lunarCorrect ? 1 : 0), "timeSetAt=" + Str(timeSetAt), "heldAt=" + Str(heldAt), "heldOffset=" + Str(heldOffset),
                 };
-                foreach (SightLine s in sights) lines.Add("sight=" + Esc(s.alt) + "|" + Esc(s.time) + "|" + s.side + "|" + s.body);
+                foreach (LunarLine l in lunars) lines.Add("lunar=" + Esc(l.dist) + "|" + Esc(l.watch) + "|" + Str(l.at) + "|" + l.limb + "|" + (l.use ? 1 : 0));
+                foreach (SightLine s in sights) lines.Add("sight=" + Esc(s.alt) + "|" + Esc(s.time) + "|" + s.side + "|" + s.body + "|" + (s.use ? 1 : 0));
                 foreach (ChronoLine c in chronos)
                 {
                     lines.Add("chrono=" + c.serial + "|" + Str(c.t1) + "|" + Str(c.e1) + "|" + Str(c.t2) + "|" + Str(c.e2) + "|" + Str(c.cert));
@@ -763,70 +806,161 @@ namespace RealisticSkies
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
             bool known = bodies.Contains(lunarBody);
-            Row("Distance", ref lunarDist, "to the Moon's edge, written in by the quintant");
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Edge of the Moon", sText, GUILayout.Width(230));
-            string limb = lunarLimb == 1 ? "near the star" : lunarLimb == 2 ? "far from the star" : "which edge?";
-            if (GUILayout.Button(limb, sButton, GUILayout.Width(200))) lunarLimb = lunarLimb == 1 ? 2 : 1;
-            GUILayout.Space(10);
-            lunarCorrect = GUILayout.Toggle(lunarCorrect, lunarCorrect ? " [x] add the semi-diameter for me" : " [ ] I give the distance to the centre", sSmall);
-            GUILayout.EndHorizontal();
-            if (GlassTime) Row("Time by the glass", ref lunarWatch, "hh:mm:ss, by the ship's glass once it is set; empty for the first");
-            else Row("Time by your watch", ref lunarWatch, "hh:mm:ss, from the pocket watch, or type it");
-            GUILayout.Space(12);
+            GUILayout.Space(6);
 
-            double measured = NavMath.ParseAngle(lunarDist);
-            double watch = NavMath.ParseTime(lunarWatch);
+            // what stops the whole page from being worked
             double sd = Lunar.MoonSemiDiameter;
-            double dist = measured;
-            if (lunarCorrect)
+            string stop = null;
+            if (!known) stop = "Pick the body you measured from.";
+            else if (!HaveAlmanac) stop = "Nothing to look the distance up in: the Almanac isn't at hand.";
+
+            // the set of distances: each one measured is a line, as on the Sights page
+            if (lunars.Count == 0) lunars.Add(new LunarLine());
+            double newest = double.NaN;                 // the true time of the last sight of the set
+            foreach (LunarLine l in lunars) if (!double.IsNaN(l.at) && (double.IsNaN(newest) || l.at > newest)) newest = l.at;
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Mean", sText, GUILayout.Width(66));
+            GUILayout.Label("Distance", sText, GUILayout.Width(130));
+            GUILayout.Label(GlassTime ? "Glass" : "Watch", sText, GUILayout.Width(130));
+            GUILayout.Label("Taken to", sText, GUILayout.Width(180));
+            GUILayout.Label("Time at the prime meridian", sText);
+            if (GUILayout.Button("Add a line", sButton, GUILayout.Width(140)))
+                lunars.Insert(0, new LunarLine { watch = WatchNow(), limb = lunars.Count > 0 ? lunars[0].limb : 0 });
+            GUILayout.EndHorizontal();
+
+            LunarLine first = null;                     // the newest line that works: the one the mean is carried from
+            double firstGmt = double.NaN, firstDist = double.NaN;
+            double sumOff = 0, minOff = double.MaxValue, maxOff = double.MinValue, sumErr = 0, firstErr = double.NaN;
+            int nOff = 0, nErr = 0, used = 0;
+            LunarLine refLine = null;
+            int remove = -1;
+            lunarScroll = GUILayout.BeginScrollView(lunarScroll, GUILayout.Height(Math.Min(lunars.Count, 3) * 42f + 4f));
+            for (int i = 0; i < lunars.Count; i++)
             {
-                if (lunarLimb == 0)
+                LunarLine l = lunars[i];
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button(l.use ? "x" : "", sButton, GUILayout.Width(40))) { l.use = !l.use; Save(); }
+                GUILayout.Space(18);
+                l.dist = GUILayout.TextField(l.dist, 12, sField, GUILayout.Width(122));
+                GUILayout.Space(8);
+                l.watch = GUILayout.TextField(l.watch, 12, sField, GUILayout.Width(122));
+                GUILayout.Space(8);
+                // what of the Moon was brought to the star: its near edge, its far edge, or its centre
+                string edge = l.limb == 1 ? "near edge" : l.limb == 2 ? "far edge" : l.limb == 3 ? "centre" : "which edge?";
+                if (GUILayout.Button(edge, sButton, GUILayout.Width(172))) { l.limb = l.limb % 3 + 1; Save(); }
+                GUILayout.Space(10);
+                string res = "";
+                if (stop == null)
                 {
-                    GUILayout.Label("Which edge of the Moon did you bring to the star?", sWarn);
-                    return;
+                    double measured = NavMath.ParseAngle(l.dist);
+                    double watch = NavMath.ParseTime(l.watch);
+                    // to the near edge the distance is short of the centre by the semi-diameter, to the far edge over it
+                    double dist = l.limb == 3 ? measured : measured + (l.limb == 1 ? sd : -sd);
+                    // where in the table to look: around the time of the sight (only the search window
+                    // comes from it, the answer from the table)
+                    double approx = !double.IsNaN(l.at) ? l.at : double.IsNaN(watch) ? NavMath.NowAbs : NavMath.OnNearestDay(watch);
+                    if (l.limb == 0) res = "<i>which edge of the Moon?</i>";
+                    else if (l.limb != 3 && double.IsNaN(sd)) res = "<i>look at the Moon once: its width is not known yet</i>";
+                    else if (double.IsNaN(dist)) res = "<i>the distance?</i>";
+                    else if (!double.IsNaN(l.at) && newest - l.at > HoldHours) res = "<i>over two hours before the last: left out</i>";
+                    else if (!NavMath.LunarTime(lunarBody, dist, approx, out double gmt)) res = "<i>not in the table near " + NavMath.Clock(approx).Substring(0, 5) + ": the right body?</i>";
+                    else
+                    {
+                        double err = double.IsNaN(watch) ? double.NaN : Wrap12(watch - gmt);
+                        res = "<b>" + NavMath.Clock(gmt) + "</b>" + (double.IsNaN(err) ? "" : "   " + (GlassTime ? "glass " : "watch ") + FastSlow(err));
+                        if (!l.use) { err = double.NaN; goto drawn; }      // not ticked: shown, but out of the mean
+                        used++;
+                        if (first == null) { first = l; firstGmt = gmt; firstDist = dist; firstErr = err; }
+                        if (!double.IsNaN(l.at))
+                        {
+                            double off = gmt - l.at;        // prime meridian time less true time, by this sight
+                            sumOff += off; nOff++;
+                            minOff = Math.Min(minOff, off); maxOff = Math.Max(maxOff, off);
+                            if (refLine == null || l.at > refLine.at) refLine = l;
+                        }
+                        if (!double.IsNaN(err)) { sumErr += err; nErr++; }
+                    }
                 }
-                if (double.IsNaN(sd))
-                {
-                    GUILayout.Label("The Moon's semi-diameter is not known yet: look at the Moon once.", sWarn);
-                    return;
-                }
-                // to the near edge the distance is short of the centre by the semi-diameter, to the far edge over it
-                dist = measured + (lunarLimb == 1 ? sd : -sd);
-                GUILayout.Label("To the centre:  " + NavMath.Angle(measured) + (lunarLimb == 1 ? " + " : " - ") +
-                                NavMath.Angle(sd) + " = " + NavMath.Angle(dist), sResult);
+                drawn:
+                GUILayout.Label(res, sResult, GUILayout.ExpandWidth(true));
+                if (GUILayout.Button("x", sButton, GUILayout.Width(36))) remove = i;
+                GUILayout.EndHorizontal();
+                GUILayout.Space(4);
             }
-            if (!known)
+            GUILayout.EndScrollView();
+            if (remove >= 0) { lunars.RemoveAt(remove); Save(); }
+
+            if (stop != null)
             {
-                GUILayout.Label("Pick the body you measured from.", sWarn);
+                GUILayout.Label(stop, sWarn);
                 return;
             }
-            if (double.IsNaN(dist) || (double.IsNaN(watch) && !GlassTime))
+            if (first == null)
             {
-                GUILayout.Label("Fill in the distance and the time of the sight.", sWarn);
+                GUILayout.Label("Measure the distance with the quintant or the cross-staff, or write it in; say what of the Moon it was taken to, and tick the lines to use.", sSmall);
                 return;
             }
-            if (!HaveAlmanac)
+            if (first.limb != 3)
             {
-                GUILayout.Label("Nothing to look the distance up in: the Almanac isn't at hand.", sWarn);
-                return;
+                double m = NavMath.ParseAngle(first.dist);
+                GUILayout.Label("To the centre:  " + NavMath.Angle(m) + (first.limb == 1 ? " + " : " - ") +
+                                NavMath.Angle(sd) + " = " + NavMath.Angle(firstDist), sResult);
             }
-            // where in the table to look: around the time of the sight (without a time yet, the
-            // moment it was taken; only the search window comes from it, the answer from the table)
-            double approx = double.IsNaN(watch)
-                ? (double.IsNaN(lunarAt) ? NavMath.NowAbs : lunarAt)
-                : NavMath.OnNearestDay(watch);
-            if (!NavMath.LunarTime(lunarBody, dist, approx, out double gmt))
-            {
-                GUILayout.Label("No such distance from " + Lunar.Name(lunarBody) + " in the table within 12 hours of " +
-                                NavMath.Clock(double.IsNaN(watch) ? approx : watch) + ". Is it the right body?", sWarn);
-                return;
-            }
-            double h0 = Math.Floor(gmt);
+            double h0 = Math.Floor(firstGmt);
             GUILayout.Label("From the Almanac:  " + NavMath.Clock(h0) + "  " + NavMath.Angle(NavMath.TableDistance(lunarBody, h0)) +
                             "     " + NavMath.Clock(h0 + 1) + "  " + NavMath.Angle(NavMath.TableDistance(lunarBody, h0 + 1)), sResult);
-            GUILayout.Label("Time at the prime meridian:  <b>" + NavMath.Clock(gmt) + "</b>", sResult);
-            DrawLunarSet(gmt, watch, dist);      // NavJournalShipTime.cs
+
+            // the mean of the set. Each sight says how far the prime meridian's time is from the true
+            // moment it was taken; the mean of those is carried to the last sight. Sights written in by
+            // hand have no such moment: they count only in the keeper's mean error.
+            double meanErr = nErr > 0 ? sumErr / nErr : double.NaN;
+            double taken, gmtMean;
+            if (refLine != null)
+            {
+                taken = refLine.at;
+                gmtMean = taken + sumOff / nOff;
+            }
+            else
+            {
+                taken = double.NaN;
+                gmtMean = double.IsNaN(meanErr) || double.IsNaN(firstErr) ? firstGmt : firstGmt + (firstErr - meanErr);
+            }
+            if (used > 1)
+            {
+                string spread = nOff > 1 ? "   (they differ by " + NavMath.Span(maxOff - minOff).Substring(1) + ")" : "";
+                GUILayout.Label("Mean of " + used + " sights, at the last one:  <b>" + NavMath.Clock(gmtMean) + "</b>" + spread, sResult);
+            }
+            else
+            {
+                GUILayout.Label("Time at the prime meridian:  <b>" + NavMath.Clock(gmtMean) + "</b>", sResult);
+                GUILayout.Label("One sight is good to a few minutes. Take two or three more one after another: the journal takes their mean.", sSmall);
+            }
+            double watchMean = double.IsNaN(meanErr) ? double.NaN : Celestial.Repeat(gmtMean + meanErr, 24.0);
+            DrawLunarSet(gmtMean, watchMean, firstDist, taken);      // NavJournalShipTime.cs
+        }
+
+        /// <summary>One measured lunar distance of the set on the Lunar distance page.</summary>
+        private class LunarLine
+        {
+            public string dist = "", watch = "";
+            public double at = double.NaN;      // the true time it was taken; NaN if written in by hand
+            public int limb;                    // 0 not said, 1 the Moon's near edge (to the star), 2 its far edge, 3 its centre; -1 as the old journal had it
+            public bool use = true;             // ticked: counts in the mean
+        }
+
+        private const int MaxLunars = 6;
+        private static readonly List<LunarLine> lunars = new List<LunarLine>();
+        private static Vector2 lunarScroll;
+
+        /// <summary>The keeper was put right by err: the times it gave for the sights of the set, as it reads now.</summary>
+        private static void LunarWatchesCorrected(double err)
+        {
+            foreach (LunarLine l in lunars)
+            {
+                double w = NavMath.ParseTime(l.watch);
+                if (!double.IsNaN(w)) l.watch = NavMath.Clock(Celestial.Repeat(w - err, 24.0));
+            }
         }
 
         /// <summary>
@@ -834,7 +968,7 @@ namespace RealisticSkies
         /// was taken; from then on the watch glass keeps that reckoning, and its error with it. In the
         /// later eras too, for whoever wants it.
         /// </summary>
-        private static void SetGlassButton(double gmt, bool clearsError)
+        private static void SetGlassButton(double gmt, bool clearsError, double lunarAt)
         {
             Camera cam = Camera.main;
             var glasses = cam != null ? ModItemWatchGlass.Near(cam.transform.position, GlassReach) : new List<ModItemWatchGlass>();
@@ -847,7 +981,7 @@ namespace RealisticSkies
                 foreach (ModItemWatchGlass g in glasses) g.SetBy(offset);
                 if (clearsError) errText = "+00:00:00";
                 double next = Math.Ceiling(NavMath.NowAbs + offset + 1e-6);
-                AddNote("Day " + (int)Math.Floor(gmt / 24.0) + ", " + NavMath.Clock(gmt) + " at the prime meridian by a lunar (" + Lunar.Name(lunarBody) +
+                AddNote(DayName((int)Math.Floor(gmt / 24.0)) + ", " + NavMath.Clock(gmt) + " at the prime meridian by a lunar (" + Lunar.Name(lunarBody) +
                         "): the ship's glass set, to start at " + NavMath.Clock(next).Substring(0, 5));
                 Save();
                 Notify("The ship's glass is set. It keeps the time from now, and will be turned at " + NavMath.Clock(next).Substring(0, 5) + " by your reckoning");
@@ -888,7 +1022,7 @@ namespace RealisticSkies
                     double gmt = c.ShownHours - cErr;
                     double we = Celestial.Repeat(w.ShownHours - gmt + 12.0, 24.0) - 12.0;
                     errText = (we < 0 ? "-" : "+") + NavMath.Clock(Math.Abs(we));
-                    AddNote("Day " + GameState.day + ": compared with chronometer No. " + c.serial + ", watch " + (we >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(we)).Substring(1) +
+                    AddNote(DayName(GameState.day) + ": compared with chronometer No. " + c.serial + ", watch " + (we >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(we)).Substring(1) +
                         (unknown ? " (the chronometer's own error not known: taken as right)" : ""));
                     Save();
                     UISoundPlayer.instance.PlayParchmentSound();
@@ -899,7 +1033,7 @@ namespace RealisticSkies
                     double gmt = w.ShownHours - watchErr;
                     double ce = Celestial.Repeat(c.ShownHours - gmt + 12.0, 24.0) - 12.0;
                     line.Fix(now, ce);
-                    AddNote("Day " + GameState.day + ": chronometer No. " + c.serial + " " + (ce >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(ce)).Substring(1) + " by the watch");
+                    AddNote(DayName(GameState.day) + ": chronometer No. " + c.serial + " " + (ce >= 0 ? "fast " : "slow ") + NavMath.Span(Math.Abs(ce)).Substring(1) + " by the watch");
                     Save();
                     UISoundPlayer.instance.PlayParchmentSound();
                 }
@@ -950,7 +1084,7 @@ namespace RealisticSkies
             GUILayout.Label("Sights", sHead, GUILayout.Width(120));
             if (byHand) useErr = GUILayout.Toggle(useErr, useErr ? (GlassTime ? "  [x] times corrected by the glass error" : "  [x] times corrected by the watch error") : "  [ ] times are already at the prime meridian", sText);
             GUILayout.EndHorizontal();
-            GUILayout.Label("Each altitude read on the quintant, quadrant or cross-staff is a new line. Say which body and on which side it was.", sSmall);
+            GUILayout.Label("Each altitude read on the quintant, quadrant or cross-staff is a new line. Say which body and on which side it was. Tick the sights taken close together to get their mean.", sSmall);
             double err = useErr ? NavMath.ParseTime(errText) : 0.0;
             if (useErr && double.IsNaN(err))
             {
@@ -960,18 +1094,31 @@ namespace RealisticSkies
             double lat = Latitude();
 
             GUILayout.BeginHorizontal();
+            GUILayout.Label("Mean", sText, GUILayout.Width(66));
             GUILayout.Label("Altitude", sText, GUILayout.Width(130));
             GUILayout.Label(GlassTime ? "Glass" : "Watch", sText, GUILayout.Width(130));
             GUILayout.Label("Side", sText, GUILayout.Width(66));
             GUILayout.Label("Body", sText, GUILayout.Width(180));
             GUILayout.Label("Longitude", sText);
             GUILayout.EndHorizontal();
-            sightScroll = GUILayout.BeginScrollView(sightScroll, GUILayout.Height(320));
+            sightScroll = GUILayout.BeginScrollView(sightScroll, GUILayout.Height(280));
             int remove = -1;
+            // the mean longitude of the ticked sights (taken from the first, so that 179 E and 179 W average right)
+            int nMean = 0;
+            double lon0 = 0, sumLon = 0, minLon = double.MaxValue, maxLon = double.MinValue, meanGmt = double.NaN;
             for (int i = 0; i < sights.Count; i++)
             {
                 SightLine s = sights[i];
                 GUILayout.BeginHorizontal();
+                if (GUILayout.Button(s.use ? "x" : "", sButton, GUILayout.Width(40))) { s.use = !s.use; Save(); }
+                GUILayout.Space(18);
+                if (s.use && Work(s, err, lat, out NavMath.Sight ms, out double mg) == null)
+                {
+                    if (nMean == 0) { lon0 = ms.longitude; meanGmt = mg; }
+                    double d = Celestial.Repeat(ms.longitude - lon0 + 180.0, 360.0) - 180.0;
+                    sumLon += d; minLon = Math.Min(minLon, d); maxLon = Math.Max(maxLon, d);
+                    nMean++;
+                }
                 s.alt = GUILayout.TextField(s.alt, 12, sField, GUILayout.Width(122));
                 GUILayout.Space(8);
                 s.time = GUILayout.TextField(s.time, 12, sField, GUILayout.Width(122));
@@ -991,11 +1138,29 @@ namespace RealisticSkies
             if (sights.Count == 0) GUILayout.Label("Nothing yet: take a sight while you carry the journal.", sSmall);
             GUILayout.EndScrollView();
             if (remove >= 0) { sights.RemoveAt(remove); Save(); }
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button("Add a line", sButton, GUILayout.Width(200)))
             {
                 sights.Insert(0, new SightLine { time = WatchNow() });
                 sightScroll = Vector2.zero;
             }
+            GUILayout.Space(20);
+            if (nMean > 1)
+            {
+                double mean = Celestial.Repeat(lon0 + sumLon / nMean + 180.0, 360.0) - 180.0;
+                string spread = NavMath.Angle(maxLon - minLon);
+                GUILayout.Label("Mean of " + nMean + " sights:  <b>" + NavMath.Lon(mean) + "</b> (" + Decimal(mean) + ")   they differ by " + spread, sResult, GUILayout.ExpandWidth(true));
+                if (GUILayout.Button("to notes", sButton, GUILayout.Width(100)))
+                {
+                    AddNote(DayName((int)Math.Floor(meanGmt / 24.0)) + ": mean of " + nMean + " sights, lat " + NavMath.Lat(lat) + " (" + Decimal(lat) + "), lon " +
+                            NavMath.Lon(mean) + " (" + Decimal(mean) + "), they differ by " + spread);
+                    Save();
+                    UISoundPlayer.instance.PlayParchmentSound();
+                    Notify("Journal: written in the notes");
+                }
+            }
+            else if (nMean == 1) GUILayout.Label("Tick one more sight for a mean.", sSmall);
+            GUILayout.EndHorizontal();
         }
 
         /// <summary>Works one line out; null if it could, else what is missing.</summary>
@@ -1033,7 +1198,7 @@ namespace RealisticSkies
         {
             if (Work(s, err, lat, out NavMath.Sight r, out double gmt) != null) return;
             int day = (int)Math.Floor(gmt / 24.0);
-            string line = "Day " + day + ", " + NavMath.Clock(gmt) + " at the prime meridian: " + Lunar.Name(s.body) + " " +
+            string line = DayName(day) + ", " + NavMath.Clock(gmt) + " at the prime meridian: " + Lunar.Name(s.body) + " " +
                           NavMath.Angle(NavMath.ParseAngle(s.alt)) + (s.side == 1 ? " east" : " west") +
                           ", lat " + NavMath.Lat(lat) + " (" + Decimal(lat) + "), lon " + NavMath.Lon(r.longitude) + " (" + Decimal(r.longitude) + ")" +
                           (s.body == Lunar.SunIndex ? ", local time " + NavMath.Clock(r.localTime) : "");
@@ -1067,6 +1232,24 @@ namespace RealisticSkies
                 }
                 GUILayout.EndHorizontal();
             }
+            // the four planets the Almanac tabulates: their hour angle and declination change from day to day
+            GUILayout.Space(6);
+            GUILayout.Label("Planets (their places are in the Almanac, day by day)", sSmall);
+            GUILayout.BeginHorizontal();
+            foreach (int number in Lunar.AlmanacPlanets)
+            {
+                int body = Lunar.PlanetBase + number;
+                string n = Lunar.Name(body);
+                if (!n.StartsWith("Planet")) n += " (Planet " + number + ")";
+                if (GUILayout.Button(n, sList, GUILayout.Width(220), GUILayout.Height(34)))
+                {
+                    sights[picking].body = body;
+                    picking = -1;
+                    Save();
+                    GUIUtility.ExitGUI();
+                }
+            }
+            GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
             if (GUILayout.Button("Back", sButton, GUILayout.Width(120))) picking = -1;
         }
@@ -1115,7 +1298,7 @@ namespace RealisticSkies
                 bool pm = half == 1;
                 // the day the board began (the junk's first board of a day begins at 23:00 the evening before)
                 int day = (int)Math.Floor((c * 12.0 + st.PeriodStart) / 24.0);
-                GUILayout.Label("Day " + day + ", " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(day)) + ", " + st.BoardName(half), sHead);
+                GUILayout.Label(DayName(day) + ", " + st.BoardName(half), sHead);
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Course", sText, GUILayout.Width(st.Native ? 330 : 200));
                 GUILayout.Label("Time", sText, GUILayout.Width(st.PeriodNames != null ? 160 : 130));
@@ -1178,7 +1361,7 @@ namespace RealisticSkies
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Notes", sHead, GUILayout.Width(120));
-            GUILayout.Label("Day " + Calendar.VoyageDay + " of the voyage: " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(GameState.day)) +
+            GUILayout.Label("Day " + (Calendar.VoyageDay + 1) + " of the voyage: " + ModItemNocturnal.DateName(ModItemNocturnal.DayOfYear(GameState.day)) +
                             ", day " + (ModItemNocturnal.DayOfYear(GameState.day) + 1) + " of the year", sSmall);
             GUILayout.EndHorizontal();
             noteScroll = GUILayout.BeginScrollView(noteScroll, GUILayout.Height(400));

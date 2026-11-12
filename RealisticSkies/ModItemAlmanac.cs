@@ -379,8 +379,8 @@ namespace RealisticSkies
                 int day1 = 2 * (pair - 1) + (int)this.health * Patches.yearLen;
                 int day2 = 2 * (pair - 1) + 1 + (int)this.health * Patches.yearLen;
 
-                this.dayLeft.GetComponent<TextMesh>().text = $"Days {day1} and {day2} AT";
-                this.dayRight.GetComponent<TextMesh>().text = $"Days {day1} and {day2} AT";
+                this.dayLeft.GetComponent<TextMesh>().text = PairName(day1, day2);
+                this.dayRight.GetComponent<TextMesh>().text = PairName(day1, day2);
 
                 this.FillSunMoon(day1, day2);
 
@@ -750,11 +750,35 @@ namespace RealisticSkies
             }
         }
 
+        /// <summary>
+        /// The two days of a page by the names the journal, the nocturnal and the ring dial call them:
+        /// "Autumn 3-4 (days 3-4)", "Autumn 23 - Winter 1 (days 23-24)", "5-6 October (days 14-15)": the date, and
+        /// the days of the year counted from 1. (The pages used to be headed
+        /// "Days 2 and 3": game days counted from nought, one less than the day of the year everything
+        /// else names, so a navigator opened the next day's page.)
+        /// </summary>
+        private static string PairName(int day1, int day2)
+        {
+            string a = ModItemNocturnal.DateName(day1), b = ModItemNocturnal.DateName(day2);
+            int len = ModItemNocturnal.YearLen;                     // days of the year from 1, as the journal and the log book's date line count them
+            string days = " (days " + (ModItemNocturnal.DayOfYear(day1) % len + 1) + "-" + (ModItemNocturnal.DayOfYear(day2) % len + 1) + ")";
+            int sa = a.LastIndexOf(' '), sb = b.LastIndexOf(' ');
+            if (sa < 0 || sb < 0) return a + " - " + b + days;
+            if (ModItemNocturnal.YearLen == 92)
+            {
+                // "Autumn 3", "Autumn 4"
+                return (a.Substring(0, sa) == b.Substring(0, sb) ? a + "-" + b.Substring(sb + 1) : a + " - " + b) + days;
+            }
+            // "5 October", "6 October"
+            int fa = a.IndexOf(' '), fb = b.IndexOf(' ');
+            return (a.Substring(fa + 1) == b.Substring(fb + 1) ? a.Substring(0, fa) + "-" + b : a + " - " + b) + days;
+        }
+
         private void FillLunarPage(int day1, int day2)
         {
             // distances are to the moon's centre; a sight to its edge needs the semi-diameter, in a
             // smaller line under the title
-            SetText(this.lunarTitle, $"Days {day1} and {day2} AT  Lunar Distances (centre)");
+            SetText(this.lunarTitle, PairName(day1, day2) + "  Lunar Distances (centre)");
             double sd = Lunar.MoonSemiDiameter;
             SetText(this.lunarSD, double.IsNaN(sd) ? "" : $"Moon semi-diameter{Celestial.Format(sd)}'");
 

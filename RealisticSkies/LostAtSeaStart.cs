@@ -61,6 +61,7 @@ namespace RealisticSkies
             GameState.day = StartDay;
             if (Sun.sun != null) Sun.sun.globalTime = Mathf.Repeat(StartLocalHour - Lon / 15f, 24f);
             if (GameState.modData != null) GameState.modData[Calendar.StartKey] = StartDay.ToString();
+            Calendar.DayWasSet();
         }
 
         internal static float Lat, Lon, Heading;
@@ -274,6 +275,7 @@ namespace RealisticSkies
             so.transform.rotation = homeRot;
             GameState.day = menuDay;
             if (Sun.sun != null) Sun.sun.globalTime = menuTime;
+            Calendar.DayWasSet();
             try
             {
                 if (homeLook != null && so.customization != null) so.customization.LoadData(homeLook);

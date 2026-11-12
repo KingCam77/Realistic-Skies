@@ -30,6 +30,30 @@ namespace RealisticSkies
 
         internal static int VoyageDay => GameState.day - StartDay;
 
+        /// <summary>
+        /// The game's day was set by the mod (a new game in a later season, the Lost at Sea start). The
+        /// log book's first day sheet and the Climate mod's date line were made when the game started
+        /// up, on day 0, and nothing tells them: they are put right here.
+        /// </summary>
+        internal static void DayWasSet()
+        {
+            try
+            {
+                if (DayLogs.instance != null && DayLogs.instance.dayLogs != null)
+                {
+                    foreach (DayLog log in DayLogs.instance.dayLogs)
+                    {
+                        if (log != null && log.daySheets != null && log.daySheets.Length > 0 && log.daySheets[0] != null) log.daySheets[0].day = GameState.day;
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogWarning("RealisticSkies: log book day: " + e.Message);
+            }
+            CompatClimate.RefreshDate();
+        }
+
         /// <summary>First day of a season in our calendar.</summary>
         internal static int SeasonStart(StartSeason s)
         {
@@ -161,7 +185,7 @@ namespace RealisticSkies
             int doy = ModItemNocturnal.DayOfYear(GameState.day);
             Calendar.Season(doy, out StartSeason season, out int sd, out int slen);
             string date = len == 92 ? season.ToString() : ModItemNocturnal.DateName(doy) + ", " + season;
-            tm.text = "Year: " + (GameState.day / len) + "  Day: " + doy + "    " + date + " (" + sd + "/" + slen + ")";
+            tm.text = "Year: " + (GameState.day / len) + "  Day: " + (doy + 1) + "    " + date + " (" + sd + "/" + slen + ")";
             return false;
         }
 
@@ -176,6 +200,15 @@ namespace RealisticSkies
                 if (GameState.day != 0) Plugin.Log.LogInfo("New game begins on " + ModItemNocturnal.DateName(GameState.day) + " (Start Season: " + configStartSeason.Value + ").");
             }
             if (GameState.modData != null) GameState.modData[Calendar.StartKey] = GameState.day.ToString();
+            Calendar.DayWasSet();
+        }
+
+        /// <summary>Climate's date line on the log book, written again (it is otherwise written only at midnight and on loading).</summary>
+        internal static void RefreshDate()
+        {
+            if (!Loaded) return;
+            try { DateText(); }
+            catch (Exception e) { Plugin.Log.LogWarning("Climate date line: " + e.Message); }
         }
     }
 }

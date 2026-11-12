@@ -44,7 +44,10 @@ namespace RealisticSkies
                 "<b>Winning it from the Moon.</b> The Moon crosses the stars by about her own width every hour, like the hand of a clock. " +
                 "Take the cross-staff or the quintant, press L, pick the Sun or a star of today's lunar table in the Almanac, bring the Moon's near edge to it and take the reading. " +
                 "The journal's Lunar distance page turns it into the time at the prime meridian.\n\n" +
-                "<b>Keeping it.</b> One click on that page sets your pocket watch, or the ship's watch glass, by the lunar. From then on it carries the time to your sights.\n\n" +
+                "You need no watch to take a lunar: the Almanac's table gives the hour.\n\n" +
+                "<b>Take several.</b> One lunar is good to a few minutes, about a degree of longitude. Take three or four one after another: the journal takes their mean.\n\n" +
+                "<b>Keeping it.</b> One button on that page sets your pocket watch, or the ship's watch glass, by the lunar. From then on it carries the time to your sights. " +
+                "With neither at hand the journal keeps the time for two hours from the sight: long enough to fetch a watch and wind it, no longer.\n\n" +
                 "No watch and no glass is true for long: they wander a few minutes a day, and every 4 minutes is a whole degree of longitude. Take a new lunar every few days."),
 
             E("Finding latitude",

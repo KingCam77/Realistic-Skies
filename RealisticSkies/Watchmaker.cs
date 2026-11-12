@@ -151,7 +151,7 @@ namespace RealisticSkies
                     b.npcKey = null;
                     if (npcKey != null && NpcModel.Length > 0)
                     {
-                        GameObject go = NpcModel.StartsWith("char|") ? Townsfolk.Build(NpcModel, "watchmaker", Look(island)) : Recipe.Build(NpcModel, "watchmaker", true);
+                        GameObject go = NpcModel.StartsWith("char|") ? Townsfolk.Build(NpcModel, "watchmaker", Look(island), shop.TransformPoint(ns.pos)) : Recipe.Build(NpcModel, "watchmaker", true);
                         if (go != null)
                         {
                             go.transform.SetParent(shop.parent, true);
@@ -1069,18 +1069,21 @@ namespace RealisticSkies
         }
 
         /// <summary>Dresses a copy of a loaded figure as the recipe says; null while there is none.</summary>
-        internal static GameObject Build(string recipe, string name, string look)
+        internal static GameObject Build(string recipe, string name, string look, Vector3 near)
         {
             string[] f = recipe.Split('|');
             if (f.Length < 4) return null;
             Transform source = null;
+            float nearest = float.MaxValue;
             foreach (PsychoticLab.CharacterCustomizer c in UnityEngine.Object.FindObjectsOfType<PsychoticLab.CharacterCustomizer>())
             {
                 if (c.GetComponentInParent<WatchmakerNpc>() != null) continue;
                 if (Traverse.Create(c).Field("bodyPartsRoot").GetValue<GameObject>() == null) continue;
                 Transform r = Root(c);
-                if (source == null || (f[1].Length > 0 && r.name == f[1])) source = r;
-                if (f[1].Length > 0 && r.name == f[1]) break;
+                if (f[1].Length > 0 && r.name == f[1]) { source = r; break; }
+                // no figure named: the one nearest his place (they are all traders there)
+                float d = Vector3.Distance(Flat(r.position), Flat(near));
+                if (source == null || d < nearest) { source = r; nearest = d; }
             }
             if (source == null) return null;
 
@@ -1092,6 +1095,22 @@ namespace RealisticSkies
             // no trader's or shop's own workings in the copy
             foreach (Shopkeeper k in fig.GetComponentsInChildren<Shopkeeper>(true)) UnityEngine.Object.Destroy(k);
             foreach (ShopArea a in fig.GetComponentsInChildren<ShopArea>(true)) UnityEngine.Object.Destroy(a);
+            // nor the things on his desk: a clerk of a trading company comes with his book, scrolls and
+            // chest under the same root. Only the figure itself is kept (its own parts are skinned).
+            var body = fig.GetComponentInChildren<PsychoticLab.CharacterCustomizer>(true);
+            if (body != null)
+            {
+                foreach (Renderer r in fig.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (r == null || r is SkinnedMeshRenderer || r.gameObject == fig || r.transform.IsChildOf(body.transform)) continue;
+                    UnityEngine.Object.Destroy(r.gameObject);
+                }
+                foreach (GoPointerButton b in fig.GetComponentsInChildren<GoPointerButton>(true))
+                {
+                    if (b == null || b.gameObject == fig || b.transform.IsChildOf(body.transform)) continue;
+                    UnityEngine.Object.Destroy(b.gameObject);
+                }
+            }
 
             var cust = fig.GetComponentInChildren<PsychoticLab.CharacterCustomizer>(true);
             if (cust != null)
